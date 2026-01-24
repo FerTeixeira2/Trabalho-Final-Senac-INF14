@@ -1,0 +1,146 @@
+import React, { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Monitor, Lock, Mail, Loader2, AlertCircle } from 'lucide-react';
+
+interface LoginFormProps {
+  onForgotPassword: () => void;
+}
+
+export function LoginForm({ onForgotPassword }: LoginFormProps) {
+  const { login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    const success = await login(email, password);
+    
+    if (!success) {
+      setError('Email ou senha incorretos');
+    }
+    
+    setIsLoading(false);
+  };
+
+  return (
+    <div className="w-full max-w-md fade-in">
+      {/* Logo and Title */}
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 mb-4">
+          <Monitor className="w-8 h-8 text-primary" />
+        </div>
+        <h1 className="text-2xl font-bold text-foreground mb-2">
+          Controle de Ativos
+        </h1>
+        <p className="text-muted-foreground">
+          Sistema de Gestão de TI
+        </p>
+      </div>
+
+      {/* Login Card */}
+      <div className="bg-card border border-border rounded-xl p-8 shadow-xl">
+        <h2 className="text-xl font-semibold text-foreground mb-6">
+          Entrar no Sistema
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {error && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-foreground">
+              Email
+            </Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-11"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-foreground">
+              Senha
+            </Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-11"
+                required
+              />
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full"
+            size="lg"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Entrando...
+              </>
+            ) : (
+              'Entrar'
+            )}
+          </Button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={onForgotPassword}
+            className="text-sm text-primary hover:text-primary/80 transition-colors"
+          >
+            Esqueci minha senha
+          </button>
+        </div>
+
+        {/* Demo credentials */}
+        <div className="mt-6 pt-6 border-t border-border">
+          <p className="text-xs text-muted-foreground text-center mb-3">
+            Credenciais de demonstração:
+          </p>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="p-2 rounded-lg bg-muted/50">
+              <p className="font-medium text-foreground">Admin</p>
+              <p className="text-muted-foreground">admin@empresa.com</p>
+              <p className="text-muted-foreground">admin123</p>
+            </div>
+            <div className="p-2 rounded-lg bg-muted/50">
+              <p className="font-medium text-foreground">Usuário</p>
+              <p className="text-muted-foreground">usuario@empresa.com</p>
+              <p className="text-muted-foreground">user123</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
