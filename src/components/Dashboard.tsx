@@ -7,9 +7,10 @@ import { AssetFilters } from '@/components/AssetFilters';
 import { AssetTable } from '@/components/AssetTable';
 import { AssetModal } from '@/components/AssetModal';
 import { DeactivateModal } from '@/components/DeactivateModal';
+import { AnalyticsCharts } from '@/components/AnalyticsCharts';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, LayoutDashboard, BarChart3 } from 'lucide-react';
 const INITIAL_FILTERS: FilterState = {
   search: '',
   brand: '',
@@ -84,16 +85,36 @@ export function Dashboard() {
         {/* Stats */}
         <StatsCards />
 
-        {/* Filters */}
-        <AssetFilters filters={filters} onFiltersChange={setFilters} />
+        {/* Tabs for Table and Analytics */}
+        <Tabs defaultValue="table" className="w-full">
+          <TabsList className="bg-muted/50 border border-border">
+            <TabsTrigger value="table" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <LayoutDashboard className="w-4 h-4" />
+              Listagem
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <BarChart3 className="w-4 h-4" />
+              Gráficos
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Table */}
-        <AssetTable
-          filters={filters}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDeactivate={handleDeactivate}
-        />
+          <TabsContent value="table" className="mt-6 space-y-6">
+            {/* Filters */}
+            <AssetFilters filters={filters} onFiltersChange={setFilters} />
+
+            {/* Table */}
+            <AssetTable
+              filters={filters}
+              onEdit={handleEdit}
+              onView={handleView}
+              onDeactivate={handleDeactivate}
+            />
+          </TabsContent>
+
+          <TabsContent value="analytics" className="mt-6">
+            <AnalyticsCharts />
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Modals */}
