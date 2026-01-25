@@ -57,6 +57,7 @@ export function AssetTable({ filters, onEdit, onView, onDeactivate }: AssetTable
           <thead>
             <tr className="border-b border-border bg-muted/30">
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Código</th>
+              <th className="text-left px-6 py-5 text-sm font-medium text-muted-foreground">Imagem</th>
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Descrição</th>
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground hidden md:table-cell">Marca/Modelo</th>
               <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground hidden lg:table-cell">Empresa</th>
@@ -76,6 +77,19 @@ export function AssetTable({ filters, onEdit, onView, onDeactivate }: AssetTable
                   <span className="font-mono text-sm font-medium text-primary">
                     {asset.code}
                   </span>
+                </td>
+                <td className="px-5 py-4">
+                  {asset.imageUrl ? (
+                    <img
+                      src={asset.imageUrl}
+                      alt={asset.description}
+                      className="w-14 h-15 rounded-md object-cover border"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-md bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                      N/A
+                    </div>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <div>
