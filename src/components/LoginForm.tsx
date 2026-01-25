@@ -41,7 +41,7 @@ export function LoginForm({ onForgotPassword }: LoginFormProps) {
           Controle de Ativos
         </h1>
         <p className="text-muted-foreground">
-          Sistema de Gestão de TI
+          Sistema de Gestão de TI INF-14
         </p>
       </div>
 
@@ -120,25 +120,6 @@ export function LoginForm({ onForgotPassword }: LoginFormProps) {
           >
             Esqueci minha senha
           </button>
-        </div>
-
-        {/* Demo credentials */}
-        <div className="mt-6 pt-6 border-t border-border">
-          <p className="text-xs text-muted-foreground text-center mb-3">
-            Credenciais de demonstração:
-          </p>
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="p-2 rounded-lg bg-muted/50">
-              <p className="font-medium text-foreground">Admin</p>
-              <p className="text-muted-foreground">admin@empresa.com</p>
-              <p className="text-muted-foreground">admin123</p>
-            </div>
-            <div className="p-2 rounded-lg bg-muted/50">
-              <p className="font-medium text-foreground">Usuário</p>
-              <p className="text-muted-foreground">usuario@empresa.com</p>
-              <p className="text-muted-foreground">user123</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
