@@ -37,7 +37,7 @@ export function AssetFilters({ filters, onFiltersChange }: AssetFiltersProps) {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
         <Input
-          placeholder="Pesquisar por código, descrição, número de série..."
+          placeholder="Pesquisar por código, nome e descrição"
           value={filters.search}
           onChange={(e) => handleChange('search', e.target.value)}
           className="pl-11"
