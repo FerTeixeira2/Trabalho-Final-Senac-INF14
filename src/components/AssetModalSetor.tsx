@@ -17,13 +17,9 @@ interface SectorModalProps {
 
 export function SectorModal({ open, onOpenChange }: SectorModalProps) {
   const [sectorName, setSectorName] = useState("");
-  const [description, setDescription] = useState("");
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ sectorName, description });
     setSectorName("");
-    setDescription("");
     onOpenChange(false);
   };
 
@@ -49,21 +45,6 @@ export function SectorModal({ open, onOpenChange }: SectorModalProps) {
               placeholder="Ex: Financeiro, RH, TI..."
               required
               className="bg-input/50 border-border focus:border-primary focus:ring-primary"
-            />
-          </div>
-
-          {/* Description Field */}
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium text-foreground">
-              Descrição
-            </Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descrição opcional do setor..."
-              rows={3}
-              className="bg-input/50 border-border focus:border-primary focus:ring-primary resize-none"
             />
           </div>
 

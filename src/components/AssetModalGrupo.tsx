@@ -17,13 +17,10 @@ interface GroupModalProps {
 
 export function GroupModal({ open, onOpenChange }: GroupModalProps) {
   const [groupName, setGroupName] = useState("");
-  const [description, setDescription] = useState("");
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ groupName, description });
+    console.log({ groupName});
     setGroupName("");
-    setDescription("");
     onOpenChange(false);
   };
 
@@ -51,22 +48,6 @@ export function GroupModal({ open, onOpenChange }: GroupModalProps) {
               className="bg-input/50 border-border focus:border-primary focus:ring-primary"
             />
           </div>
-
-          {/* Description Field */}
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium text-foreground">
-              Descrição
-            </Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descrição opcional do grupo..."
-              rows={3}
-              className="bg-input/50 border-border focus:border-primary focus:ring-primary resize-none"
-            />
-          </div>
-
           {/* Action Buttons */}
           <div className="flex gap-3 pt-2">
             <Button
