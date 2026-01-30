@@ -44,9 +44,6 @@ export function LoginForm({ onForgotPassword }: LoginFormProps) {
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
 
-      ctx.fillStyle = '#f9a8d4'; // rosa claro
-      ctx.fillRect(0, 0, width, height);
-
       particles.forEach(p => {
         p.x += p.vx;
         p.y += p.vy;
