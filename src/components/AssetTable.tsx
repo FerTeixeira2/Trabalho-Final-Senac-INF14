@@ -99,9 +99,6 @@ export function AssetTable({ filters, onEdit, onView, onDeactivate }: AssetTable
                     <p className="text-sm font-medium text-foreground line-clamp-1">
                       {asset.description}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      S/N: {asset.serialNumber}
-                    </p>
                   </div>
                 </td>
                 <td className="px-4 py-3 hidden md:table-cell">

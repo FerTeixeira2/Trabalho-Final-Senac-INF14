@@ -152,9 +152,20 @@ export function Dashboard() {
               <AssetFilters filters={filters} onFiltersChange={setFilters} />
               <AssetTable
                 filters={filters}
-                onEdit={() => {}}
-                onView={() => {}}
-                onDeactivate={() => {}}
+                onView={(asset) => {
+                  setSelectedAsset(asset);
+                  setModalMode('view');
+                  setIsAssetModalOpen(true);
+                }}
+                onEdit={(asset) => {
+                  setSelectedAsset(asset);
+                  setModalMode('edit');
+                  setIsAssetModalOpen(true);
+                }}
+                onDeactivate={(asset) => {
+                  setSelectedAsset(asset);
+                  setIsDeactivateModalOpen(true);
+                }}
               />
             </TabsContent>
 
