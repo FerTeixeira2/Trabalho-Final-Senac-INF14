@@ -1,19 +1,16 @@
 export interface Asset {
   id: string;
   code: string;
+  name: string; // ✅ PADRÃO
   description: string;
+  imageUrl?: string;
   brand: string;
   model: string;
-  serialNumber: string;
-  registrationDate: string;
-  responsibleUser: string;
   company: string;
   sector: string;
-  group: string;
-  subgroup: string;
-  observations: string;
-  imageUrl: string;
   status: 'active' | 'inactive';
+  serialNumber?: string;
+  responsibleUser?: string;
 }
 
 export interface User {
