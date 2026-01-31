@@ -5,7 +5,7 @@ import { Header } from '@/components/Header';
 import { StatsCards } from '@/components/StatsCards';
 import { AssetFilters } from '@/components/AssetFilters';
 import { AssetTable } from '@/components/AssetTable';
-import { AssetModal } from '@/components/AssetModal';
+import { AssetModalCadastrarAtivo } from '@/components/AssetModalCadastrarAtivo';
 import { BrandModal } from '@/components/AssetModalMarca';
 import { CompanyModal } from '@/components/AssetModalEmpresa';
 import { GroupModal } from '@/components/AssetModalGrupo';
@@ -177,7 +177,7 @@ export function Dashboard() {
       </div>
 
       {/* ===== MODAIS ===== */}
-      <AssetModal
+      <AssetModalCadastrarAtivo
         isOpen={isAssetModalOpen}
         onClose={() => setIsAssetModalOpen(false)}
         asset={selectedAsset}

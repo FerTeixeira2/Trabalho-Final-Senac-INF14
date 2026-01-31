@@ -1,7 +1,7 @@
 export interface Asset {
   id: string;
   code: string;
-  name: string; // ✅ PADRÃO
+  name: string; 
   description: string;
   imageUrl?: string;
   brand: string;
@@ -11,6 +11,10 @@ export interface Asset {
   status: 'active' | 'inactive';
   serialNumber?: string;
   responsibleUser?: string;
+
+  group?: string;         // 🔹 adicionado
+  subgroup?: string;      // 🔹 adicionado
+  observations?: string;  // 🔹 adicionado
 }
 
 export interface User {
@@ -25,7 +29,7 @@ export interface AuthState {
   isAuthenticated: boolean;
 }
 
-export type AssetFormData = Omit<Asset, 'id' | 'registrationDate'>;
+export type AssetFormData = Omit<Asset, 'id'>;
 
 export interface FilterState {
   search: string;
