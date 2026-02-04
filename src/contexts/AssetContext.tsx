@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
+
 import { Asset, AssetFormData } from '@/types/asset';
 
 interface AssetContextType {
@@ -15,6 +22,9 @@ interface AssetContextType {
 
 const AssetContext = createContext<AssetContextType | undefined>(undefined);
 
+// 🔹 URL DA API (vinda do .env)
+const API_URL = import.meta.env.VITE_API_URL;
+
 export function AssetProvider({ children }: { children: ReactNode }) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +38,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
 
   // 🔹 BUSCAR ATIVOS
   async function fetchAssets() {
-    const response = await fetch('http://localhost:3000/assets');
+    const response = await fetch(`${API_URL}/assets`);
     const data = await response.json();
 
     const mapped: Asset[] = data.map((item: any) => ({
@@ -43,8 +53,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
       sector: item.setor ?? '',
       status: item.status === 'Ativo' ? 'active' : 'inactive',
       serialNumber: item.numeroSerie ?? '',
-      responsibleUser: 'ADM',
-
+      responsibleUser: item.nomeUsuario ?? 'ADM',
       group: item.grupo ?? '',
       subgroup: item.subgrupo ?? '',
       observations: item.observacoes ?? '',
@@ -56,12 +65,12 @@ export function AssetProvider({ children }: { children: ReactNode }) {
   // 🔹 BUSCAR LISTAS AUXILIARES
   async function fetchLookups() {
     const [b, c, g, sg, s, st] = await Promise.all([
-      fetch('http://localhost:3000/brands').then(r => r.json()),
-      fetch('http://localhost:3000/companies').then(r => r.json()),
-      fetch('http://localhost:3000/groups').then(r => r.json()),
-      fetch('http://localhost:3000/subgroups').then(r => r.json()),
-      fetch('http://localhost:3000/sectors').then(r => r.json()),
-      fetch('http://localhost:3000/status').then(r => r.json()),
+      fetch(`${API_URL}/brands`).then(r => r.json()),
+      fetch(`${API_URL}/companies`).then(r => r.json()),
+      fetch(`${API_URL}/groups`).then(r => r.json()),
+      fetch(`${API_URL}/subgroups`).then(r => r.json()),
+      fetch(`${API_URL}/sectors`).then(r => r.json()),
+      fetch(`${API_URL}/status`).then(r => r.json()),
     ]);
 
     setBrands(b);
@@ -74,20 +83,22 @@ export function AssetProvider({ children }: { children: ReactNode }) {
 
   // 🔹 ADICIONAR ATIVO
   async function addAsset(data: AssetFormData) {
-    await fetch('http://localhost:3000/assets', {
+    await fetch(`${API_URL}/assets`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...data,
-        responsibleUser: 'ADM', // só para exibir
+        responsibleUser: 'ADM',
       }),
     });
 
-    await fetchAssets(); // 🔥 atualiza tabela automaticamente
+    await fetchAssets(); // atualiza lista automaticamente
   }
 
   useEffect(() => {
-    Promise.all([fetchAssets(), fetchLookups()]).finally(() => setLoading(false));
+    Promise.all([fetchAssets(), fetchLookups()])
+      .catch(err => console.error('Erro ao carregar dados:', err))
+      .finally(() => setLoading(false));
   }, []);
 
   return (

@@ -3,31 +3,33 @@ const cors = require('cors');
 const mysql = require('mysql2');
 
 const app = express();
-app.use(cors({ origin: 'http://localhost:8080' }));
+
+// 🔹 Ativar CORS para qualquer origem (rede)
+app.use(cors({
+  origin: '*'
+}));
 app.use(express.json());
 
-// Conexão com o MySQL
+// 🔹 Conexão com o MySQL
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
+  host: 'localhost', // Se MySQL estiver na mesma VM
+  user: 'manager',
+  password: '1985#D-base_',
   database: 'trabalho_final_senac',
 });
 
 db.connect(err => {
   if (err) {
     console.error('Erro ao conectar no banco:', err);
-    process.exit(1);
+    process.exit(1); // encerra se não conectar
   }
   console.log('Conectado ao MySQL');
 });
 
-// ----- ROTAS -----
-
-// ATIVOS
+//ROTAS
 app.get('/assets', (req, res) => {
   const sql = `
-    SELECT 
+    SELECT
       i.codigo,
       i.nome,
       i.imagem,
@@ -154,8 +156,8 @@ app.post('/assets', (req, res) => {
     res.json({ message: 'Ativo cadastrado', id: result.insertId });
   });
 });
-
-// INICIAR SERVIDOR
-app.listen(3000, () => {
-  console.log('API rodando em http://localhost:3000');
+// 🔹 INICIAR SERVIDOR
+const PORT = 3000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor rodando em http://0.0.0.0:${PORT}`);
 });
