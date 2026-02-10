@@ -9,7 +9,7 @@ import { AssetModalCadastrarAtivo } from '@/components/AssetModalCadastrarAtivo'
 import { BrandModal } from '@/components/AssetModalMarca';
 import { CompanyModal } from '@/components/AssetModalEmpresa';
 import { GroupModal } from '@/components/AssetModalGrupo';
-import { SubgroupModal } from '@/components/AssetModalSubGrupo';
+import { AssetModalSubGrupo } from '@/components/AssetModalSubGrupo';
 import { SectorModal } from '@/components/AssetModalSetor';
 import { DeactivateModal } from '@/components/DeactivateModal';
 import { AnalyticsCharts } from '@/components/AnalyticsCharts';
@@ -187,7 +187,10 @@ export function Dashboard() {
       <BrandModal open={isBrandModalOpen} onOpenChange={setIsBrandModalOpen} />
       <CompanyModal open={isCompanyModalOpen} onOpenChange={setIsCompanyModalOpen} />
       <GroupModal open={isGroupModalOpen} onOpenChange={setIsGroupModalOpen} />
-      <SubgroupModal open={isSubgroupModalOpen} onOpenChange={setIsSubgroupModalOpen} />
+      <AssetModalSubGrupo
+        isOpen={isSubgroupModalOpen}
+        onClose={() => setIsSubgroupModalOpen(false)}
+      />
       <SectorModal open={isSectorModalOpen} onOpenChange={setIsSectorModalOpen} />
 
       <DeactivateModal

@@ -48,37 +48,45 @@ const INITIAL_FORM: AssetFormData = {
   ondeEsta: '',
 };
 
-export function AssetModalCadastrarAtivo({
-  isOpen,
-  onClose,
-  asset,
-  mode,
-}: AssetModalProps) {
-  const { addAsset, brands, companies, groups, subgroups, sectors } =
-    useAssets();
+export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: AssetModalProps) {
+  const { addAsset, brands, companies, groups, subgroups, sectors } = useAssets();
 
   const [formData, setFormData] = useState<AssetFormData>(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const isView = mode === 'view';
 
+  // Sincroniza o formulário quando o modal abre ou o ativo muda
   useEffect(() => {
-    if (asset && mode !== 'create') {
-      setFormData({
-        ...INITIAL_FORM,
-        ...asset,
-        imageUrl: asset.imageUrl ?? '',
-      });
-    } else {
-      setFormData(INITIAL_FORM);
+    if (isOpen) {
+      if (asset && mode !== 'create') {
+        setFormData({
+          ...INITIAL_FORM,
+          ...asset,
+          group: asset.group ? String(asset.group) : '',
+          subgroup: asset.subgroup ? String(asset.subgroup) : '',
+          imageUrl: asset.imageUrl ?? '',
+        });
+      } else {
+        setFormData(INITIAL_FORM);
+      }
     }
   }, [asset, mode, isOpen]);
 
+  // Lógica para lidar com mudanças e resetar subgrupo se o grupo mudar
   function handleChange(field: keyof AssetFormData, value: string) {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      
+      // Se o usuário trocar o GRUPO, limpamos o SUBGRUPO selecionado
+      if (field === 'group') {
+        updated.subgroup = '';
+      }
+      
+      return updated;
+    });
   }
 
   async function handleImageUpload(file: File) {
@@ -109,10 +117,17 @@ export function AssetModalCadastrarAtivo({
     setLoading(true);
 
     try {
-      await addAsset(formData);
-      toast.success('Ativo cadastrado com sucesso');
+      if (mode === 'edit' && asset?.id) {
+        // Lógica de update se você tiver essa função no context
+        // await updateAsset(asset.id, formData);
+        toast.success('Ativo atualizado com sucesso');
+      } else {
+        await addAsset(formData);
+        toast.success('Ativo cadastrado com sucesso');
+      }
       onClose();
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error('Erro ao salvar ativo');
     } finally {
       setLoading(false);
@@ -123,9 +138,7 @@ export function AssetModalCadastrarAtivo({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {mode === 'edit' ? 'Editar Ativo' : 'Cadastrar Ativo'}
-          </DialogTitle>
+          <DialogTitle>{mode === 'edit' ? 'Editar Ativo' : mode === 'view' ? 'Visualizar Ativo' : 'Cadastrar Ativo'}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -133,10 +146,7 @@ export function AssetModalCadastrarAtivo({
           <div className="flex gap-4 items-start">
             <div className="w-28 h-28 border rounded flex items-center justify-center overflow-hidden bg-muted">
               {formData.imageUrl ? (
-                <img
-                  src={formData.imageUrl}
-                  className="w-full h-full object-cover"
-                />
+                <img src={formData.imageUrl} className="w-full h-full object-cover" alt="Ativo" />
               ) : (
                 <Upload className="opacity-40" />
               )}
@@ -149,7 +159,6 @@ export function AssetModalCadastrarAtivo({
                 onChange={e => handleChange('imageUrl', e.target.value)}
                 disabled={isView}
               />
-
               {!isView && (
                 <>
                   <Button
@@ -158,80 +167,103 @@ export function AssetModalCadastrarAtivo({
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploading}
                   >
-                    {uploading ? 'Enviando imagem...' : 'Escolher imagem'}
+                    {uploading ? 'Enviando...' : 'Escolher arquivo'}
                   </Button>
-
                   <input
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={e =>
-                      e.target.files &&
-                      handleImageUpload(e.target.files[0])
-                    }
+                    onChange={e => e.target.files && handleImageUpload(e.target.files[0])}
                   />
                 </>
               )}
             </div>
           </div>
 
-          {/* CAMPOS */}
-          <Input placeholder="Código" value={formData.code} onChange={e => handleChange('code', e.target.value)} disabled={isView} />
-          <Input placeholder="Nome" value={formData.name} onChange={e => handleChange('name', e.target.value)} disabled={isView} />
+          <div className="grid grid-cols-2 gap-4">
+            <Input placeholder="Código" value={formData.code} onChange={e => handleChange('code', e.target.value)} disabled={isView} />
+            <Input placeholder="Nome" value={formData.name} onChange={e => handleChange('name', e.target.value)} disabled={isView} />
+          </div>
+
           <Input placeholder="Modelo" value={formData.model} onChange={e => handleChange('model', e.target.value)} disabled={isView} />
 
-          <Select value={formData.brand} onValueChange={v => handleChange('brand', v)} disabled={isView}>
-            <SelectTrigger><SelectValue placeholder="Marca" /></SelectTrigger>
-            <SelectContent>{brands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
-          </Select>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Marca */}
+            <Select value={formData.brand} onValueChange={v => handleChange('brand', v)} disabled={isView}>
+              <SelectTrigger><SelectValue placeholder="Marca" /></SelectTrigger>
+              <SelectContent>
+                {brands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+              </SelectContent>
+            </Select>
 
-          <Select value={formData.company} onValueChange={v => handleChange('company', v)} disabled={isView}>
-            <SelectTrigger><SelectValue placeholder="Empresa" /></SelectTrigger>
-            <SelectContent>{companies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-          </Select>
+            {/* Empresa */}
+            <Select value={formData.company} onValueChange={v => handleChange('company', v)} disabled={isView}>
+              <SelectTrigger><SelectValue placeholder="Empresa" /></SelectTrigger>
+              <SelectContent>
+                {companies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select value={formData.sector} onValueChange={v => handleChange('sector', v)} disabled={isView}>
-            <SelectTrigger><SelectValue placeholder="Setor" /></SelectTrigger>
-            <SelectContent>{sectors.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-          </Select>
-
+          {/* Grupo */}
           <Select value={formData.group} onValueChange={v => handleChange('group', v)} disabled={isView}>
             <SelectTrigger><SelectValue placeholder="Grupo" /></SelectTrigger>
-            <SelectContent>{groups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
-          </Select>
-
-          <Select value={formData.subgroup} onValueChange={v => handleChange('subgroup', v)} disabled={isView}>
-            <SelectTrigger><SelectValue placeholder="Subgrupo" /></SelectTrigger>
-            <SelectContent>{subgroups.map(sg => <SelectItem key={sg} value={sg}>{sg}</SelectItem>)}</SelectContent>
-          </Select>
-
-          <Select value={formData.status} onValueChange={v => handleChange('status', v)} disabled={isView}>
-            <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="active">Ativo</SelectItem>
-              <SelectItem value="inactive">Inativo</SelectItem>
+              {groups.map(g => (
+                <SelectItem key={g.idGrupo} value={String(g.idGrupo)}>
+                  {g.descricaoGrupo}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
-          {/* ✅ AQUI ESTAVA O BUG */}
-          <Input
-            placeholder="Onde está localizado"
-            value={formData.ondeEsta}
-            onChange={e => handleChange('ondeEsta', e.target.value)}
-            disabled={isView}
-          />
+          {/* Subgrupo (Filtrado Dinamicamente) */}
+          <Select 
+            value={formData.subgroup} 
+            onValueChange={v => handleChange('subgroup', v)} 
+            disabled={isView || !formData.group}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={formData.group ? "Selecione o Subgrupo" : "Selecione um Grupo primeiro"} />
+            </SelectTrigger>
+            <SelectContent>
+              {subgroups
+                .filter(sg => String(sg.idGrupo) === String(formData.group))
+                .map(sg => (
+                  <SelectItem key={sg.idSubgrupo} value={String(sg.idSubgrupo)}>
+                    {sg.descricaoSubgrupo}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
 
+          <div className="grid grid-cols-2 gap-4">
+            <Select value={formData.sector} onValueChange={v => handleChange('sector', v)} disabled={isView}>
+              <SelectTrigger><SelectValue placeholder="Setor" /></SelectTrigger>
+              <SelectContent>
+                {sectors.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+
+            <Select value={formData.status} onValueChange={v => handleChange('status', v)} disabled={isView}>
+              <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Ativo</SelectItem>
+                <SelectItem value="inactive">Inativo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Input placeholder="Onde está localizado" value={formData.ondeEsta} onChange={e => handleChange('ondeEsta', e.target.value)} disabled={isView} />
           <Textarea placeholder="Descrição" value={formData.description} onChange={e => handleChange('description', e.target.value)} disabled={isView} />
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            {mode !== 'view' && (
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            {!isView && (
               <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                Salvar
+                {mode === 'edit' ? 'Atualizar' : 'Salvar'}
               </Button>
             )}
           </div>

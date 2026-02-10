@@ -95,17 +95,22 @@ app.get('/companies', (_, res) => {
 });
 
 app.get('/groups', (_, res) => {
-  db.query('SELECT descricaoGrupo FROM grupo', (err, r) => {
+  // Retorna id + descrição para uso em selects e relacionamentos
+  db.query('SELECT idGrupo, descricaoGrupo FROM grupo', (err, r) => {
     if (err) return res.status(500).json(err);
-    res.json(r.map(i => i.descricaoGrupo));
+    res.json(r);
   });
 });
 
 app.get('/subgroups', (_, res) => {
-  db.query('SELECT descricaoSubgrupo FROM subgrupo', (err, r) => {
-    if (err) return res.status(500).json(err);
-    res.json(r.map(i => i.descricaoSubgrupo));
-  });
+  // Retorna id + descrição do subgrupo (e opcionalmente idGrupo)
+  db.query(
+    'SELECT idSubgrupo, descricaoSubgrupo, idGrupo FROM subgrupo',
+    (err, r) => {
+      if (err) return res.status(500).json(err);
+      res.json(r);
+    }
+  );
 });
 
 app.get('/sectors', (_, res) => {
@@ -184,6 +189,18 @@ app.post('/sectors', (req, res) => {
     res.status(201).json({ message: 'Setor cadastrado com sucesso', id: result.insertId });
   });
 });
+
+// ================= CADASTRAR SUBGRUPO =================
+app.post('/subgroups', (req, res) => {
+  const { name, groupId, description } = req.body;
+  if (!name || !groupId) return res.status(400).json({ error: 'Nome do subgrupo e grupo são obrigatórios' });
+  const sql = `INSERT INTO subgrupo (descricaoSubgrupo, idGrupo, descricao) VALUES (?, ?, ?)`;
+  db.query(sql, [name, groupId, description || null], (err, result) => {
+    if (err) return res.status(500).json({ error: err.sqlMessage });
+    res.status(201).json({ message: 'Subgrupo cadastrado com sucesso', id: result.insertId });
+  });
+});
+
 
 // ================= UPLOAD =================
 app.post('/upload', upload.single('image'), (req, res) => {
