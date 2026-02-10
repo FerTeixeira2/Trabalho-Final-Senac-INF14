@@ -42,9 +42,7 @@ db.connect(err => {
   console.log('Conectado ao MySQL');
 });
 
-// ================= ROTAS =================
-
-// 🔹 LISTAR ATIVOS
+// ================= LISTAR ATIVOS =================
 app.get('/assets', (req, res) => {
   const sql = `
     SELECT 
@@ -64,7 +62,7 @@ app.get('/assets', (req, res) => {
     FROM item i
     LEFT JOIN marca m ON m.idMarca = i.idMarca
     LEFT JOIN setor s ON s.idSetor = i.idSetor
-    LEFT JOIN status st ON st.IdStatus = i.IdStatus
+    LEFT JOIN status st ON st.idStatus = i.idStatus
     LEFT JOIN empresa e ON e.idEmpresa = i.idEmpresa
     LEFT JOIN grupo g ON g.idGrupo = i.idGrupo
     LEFT JOIN subgrupo sg ON sg.idSubgrupo = i.idSubgrupo
@@ -96,13 +94,6 @@ app.get('/companies', (_, res) => {
   });
 });
 
-app.get('/sectors', (_, res) => {
-  db.query('SELECT descricaoSetor FROM setor', (err, r) => {
-    if (err) return res.status(500).json(err);
-    res.json(r.map(i => i.descricaoSetor));
-  });
-});
-
 app.get('/groups', (_, res) => {
   db.query('SELECT descricaoGrupo FROM grupo', (err, r) => {
     if (err) return res.status(500).json(err);
@@ -117,6 +108,13 @@ app.get('/subgroups', (_, res) => {
   });
 });
 
+app.get('/sectors', (_, res) => {
+  db.query('SELECT descricaoSetor FROM setor', (err, r) => {
+    if (err) return res.status(500).json(err);
+    res.json(r.map(i => i.descricaoSetor));
+  });
+});
+
 app.get('/status', (_, res) => {
   db.query('SELECT nomeStatus FROM status', (err, r) => {
     if (err) return res.status(500).json(err);
@@ -124,25 +122,53 @@ app.get('/status', (_, res) => {
   });
 });
 
-// ================= UPLOAD DE IMAGEM =================
+// ================= CADASTRAR EMPRESA =================
+app.post('/companies', (req, res) => {
+  const { name, cnpj, description } = req.body;
 
+  if (!name) {
+    return res.status(400).json({ error: 'Nome da empresa é obrigatório' });
+  }
+
+  const sql = `
+    INSERT INTO empresa (descricaoEmpresa, cnpjEmpresa, descricao)
+    VALUES (?, ?, ?)
+  `;
+
+  db.query(
+    sql,
+    [name, cnpj || null, description || null],
+    (err, result) => {
+      if (err) {
+        console.error('ERRO MYSQL:', err);
+        return res.status(500).json({ error: err.sqlMessage });
+      }
+
+      res.status(201).json({
+        message: 'Empresa cadastrada com sucesso',
+        id: result.insertId,
+      });
+    }
+  );
+});
+
+// ================= UPLOAD =================
 app.post('/upload', upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Nenhuma imagem enviada' });
   }
 
-  const imageUrl = `http://localhost:3000/uploads/${req.file.filename}`;
-  res.json({ imageUrl });
+  res.json({
+    imageUrl: `http://localhost:3000/uploads/${req.file.filename}`,
+  });
 });
 
 // ================= CADASTRAR ATIVO =================
-
 app.post('/assets', (req, res) => {
   const item = req.body;
 
   const sql = `
-    INSERT INTO item
-    (
+    INSERT INTO item (
       codigo,
       nome,
       descricaoItem,
@@ -155,43 +181,41 @@ app.post('/assets', (req, res) => {
       idSubgrupo,
       imagem,
       data,
-      IdStatus,
+      idStatus,
       ondeEsta
     )
     VALUES (
       ?, ?, ?,
-      (SELECT idMarca FROM marca WHERE descricaoMarca = ?),
-      ?,
-      1,
-      (SELECT idSetor FROM setor WHERE descricaoSetor = ?),
-      (SELECT idEmpresa FROM empresa WHERE descricaoEmpresa = ?),
-      (SELECT idGrupo FROM grupo WHERE descricaoGrupo = ?),
-      (SELECT idSubgrupo FROM subgrupo WHERE descricaoSubgrupo = ?),
-      ?,
-      NOW(),
-      (SELECT IdStatus FROM status WHERE nomeStatus = ?),
+      (SELECT idMarca FROM marca WHERE descricaoMarca = ? LIMIT 1),
+      ?, 1,
+      (SELECT idSetor FROM setor WHERE descricaoSetor = ? LIMIT 1),
+      (SELECT idEmpresa FROM empresa WHERE descricaoEmpresa = ? LIMIT 1),
+      (SELECT idGrupo FROM grupo WHERE descricaoGrupo = ? LIMIT 1),
+      (SELECT idSubgrupo FROM subgrupo WHERE descricaoSubgrupo = ? LIMIT 1),
+      ?, NOW(),
+      (SELECT idStatus FROM status WHERE nomeStatus = ? LIMIT 1),
       ?
     )
   `;
 
   const values = [
-    item.code,                // codigo
-    item.name,                // nome
-    item.description,         // descricaoItem
-    item.brand,               // marca
-    item.model,               // modelo
-    item.sector,              // setor
-    item.company,             // empresa
-    item.group,               // grupo
-    item.subgroup,            // subgrupo
-    item.imageUrl || null,    // imagem
-    item.status === 'active' ? 'Ativo' : 'Baixado', // status
-    item.ondeEsta             // ondeEsta
+    item.code,
+    item.name,
+    item.description,
+    item.brand,
+    item.model,
+    item.sector,
+    item.company,
+    item.group,
+    item.subgroup,
+    item.imageUrl || null,
+    item.status === 'active' ? 'Ativo' : 'Baixado',
+    item.ondeEsta || null,
   ];
 
   db.query(sql, values, (err, result) => {
     if (err) {
-      console.error('Erro ao cadastrar ativo:', err);
+      console.error('ERRO MYSQL:', err);
       return res.status(500).json({ error: err.sqlMessage });
     }
 
@@ -203,7 +227,6 @@ app.post('/assets', (req, res) => {
 });
 
 // ================= SERVIDOR =================
-
 app.listen(3000, () => {
   console.log('API rodando em http://localhost:3000');
 });
