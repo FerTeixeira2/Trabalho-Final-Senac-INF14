@@ -8,7 +8,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { useAssets } from "@/contexts/AssetContext";
+import { toast } from "sonner"; // IMPORTAR TOAST
 
 interface GroupModalProps {
   open: boolean;
@@ -17,11 +18,21 @@ interface GroupModalProps {
 
 export function GroupModal({ open, onOpenChange }: GroupModalProps) {
   const [groupName, setGroupName] = useState("");
-  const handleSubmit = (e: React.FormEvent) => {
+  const { addGroup } = useAssets();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ groupName});
-    setGroupName("");
-    onOpenChange(false);
+    if (!groupName.trim()) return;
+
+    try {
+      await addGroup({ name: groupName }); // cadastra no back-end
+      setGroupName(""); // limpa input
+      onOpenChange(false); // fecha modal
+      toast.success("Grupo cadastrado com sucesso!"); // mensagem de sucesso
+    } catch (err) {
+      console.error("Erro ao cadastrar grupo:", err);
+      toast.error("Não foi possível cadastrar o grupo.");
+    }
   };
 
   return (
@@ -48,6 +59,7 @@ export function GroupModal({ open, onOpenChange }: GroupModalProps) {
               className="bg-input/50 border-border focus:border-primary focus:ring-primary"
             />
           </div>
+
           {/* Action Buttons */}
           <div className="flex gap-3 pt-2">
             <Button

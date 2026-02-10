@@ -8,7 +8,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { useAssets } from "@/contexts/AssetContext"; // importar contexto
+import { toast } from "sonner"; // importar toast
 
 interface SectorModalProps {
   open: boolean;
@@ -17,10 +18,21 @@ interface SectorModalProps {
 
 export function SectorModal({ open, onOpenChange }: SectorModalProps) {
   const [sectorName, setSectorName] = useState("");
-  const handleSubmit = (e: React.FormEvent) => {
+  const { addSector } = useAssets(); // pegar função do contexto
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSectorName("");
-    onOpenChange(false);
+    if (!sectorName.trim()) return; // evita cadastro vazio
+
+    try {
+      await addSector({ name: sectorName }); // cadastra no back-end
+      setSectorName(""); // limpa input
+      onOpenChange(false); // fecha modal
+      toast.success("Setor cadastrado com sucesso!"); // mensagem de sucesso
+    } catch (err) {
+      console.error("Erro ao cadastrar setor:", err);
+      toast.error("Não foi possível cadastrar o setor.");
+    }
   };
 
   return (

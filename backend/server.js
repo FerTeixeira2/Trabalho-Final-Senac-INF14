@@ -152,6 +152,39 @@ app.post('/companies', (req, res) => {
   );
 });
 
+// ================= CADASTRAR MARCA =================
+app.post('/brands', (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'Nome da marca é obrigatório' });
+  const sql = `INSERT INTO marca (descricaoMarca) VALUES (?)`;
+  db.query(sql, [name], (err, result) => {
+    if (err) return res.status(500).json({ error: err.sqlMessage });
+    res.status(201).json({ message: 'Marca cadastrada com sucesso', id: result.insertId });
+  });
+});
+
+// ================= CADASTRAR GRUPO =================
+app.post('/groups', (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'Nome do grupo é obrigatório' });
+  const sql = `INSERT INTO grupo (descricaoGrupo) VALUES (?)`;
+  db.query(sql, [name], (err, result) => {
+    if (err) return res.status(500).json({ error: err.sqlMessage });
+    res.status(201).json({ message: 'Grupo cadastrado com sucesso', id: result.insertId });
+  });
+});
+
+// ================= CADASTRAR SETOR =================
+app.post('/sectors', (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'Nome do setor é obrigatório' });
+  const sql = `INSERT INTO setor (descricaoSetor) VALUES (?)`;
+  db.query(sql, [name], (err, result) => {
+    if (err) return res.status(500).json({ error: err.sqlMessage });
+    res.status(201).json({ message: 'Setor cadastrado com sucesso', id: result.insertId });
+  });
+});
+
 // ================= UPLOAD =================
 app.post('/upload', upload.single('image'), (req, res) => {
   if (!req.file) {

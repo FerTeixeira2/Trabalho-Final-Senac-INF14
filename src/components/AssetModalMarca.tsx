@@ -8,8 +8,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Upload, X } from "lucide-react";
+import { useAssets } from "@/contexts/AssetContext"; // IMPORTAR CONTEXTO
+import { toast } from "sonner"; // IMPORTAR TOAST
 
 interface BrandModalProps {
   open: boolean;
@@ -18,10 +18,21 @@ interface BrandModalProps {
 
 export function BrandModal({ open, onOpenChange }: BrandModalProps) {
   const [brandName, setBrandName] = useState("");
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();    // Reset form
-    setBrandName("");
-    onOpenChange(false);
+  const { addBrand } = useAssets(); // PEGANDO FUNÇÃO DO CONTEXTO
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!brandName.trim()) return; // evita cadastro vazio
+
+    try {
+      await addBrand({ name: brandName }); // chama o back-end
+      setBrandName(""); // limpa input
+      onOpenChange(false); // fecha modal
+      toast.success("Marca cadastrada com sucesso!"); // mensagem de sucesso
+    } catch (err) {
+      console.error("Erro ao cadastrar marca:", err);
+      toast.error("Não foi possível cadastrar a marca.");
+    }
   };
 
   return (
@@ -34,7 +45,6 @@ export function BrandModal({ open, onOpenChange }: BrandModalProps) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-5">
-
           {/* Brand Name Field */}
           <div className="space-y-2">
             <Label htmlFor="brandName" className="text-sm font-medium text-foreground">
@@ -49,6 +59,7 @@ export function BrandModal({ open, onOpenChange }: BrandModalProps) {
               className="bg-input/50 border-border focus:border-primary focus:ring-primary"
             />
           </div>
+
           {/* Action Buttons */}
           <div className="flex gap-3 pt-2">
             <Button

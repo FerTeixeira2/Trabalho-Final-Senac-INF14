@@ -12,6 +12,9 @@ interface AssetContextType {
   loading: boolean;
   addAsset: (data: AssetFormData) => Promise<void>;
   addCompany: (data: { name: string; cnpj?: string; description?: string }) => Promise<void>;
+  addBrand: (data: { name: string }) => Promise<void>;
+  addGroup: (data: { name: string }) => Promise<void>;
+  addSector: (data: { name: string }) => Promise<void>;
 }
 
 const AssetContext = createContext<AssetContextType | undefined>(undefined);
@@ -55,7 +58,6 @@ export function AssetProvider({ children }: { children: ReactNode }) {
       fetch('http://localhost:3000/sectors').then(r => r.json()),
       fetch('http://localhost:3000/status').then(r => r.json()),
     ]);
-
     setBrands(b);
     setCompanies(c);
     setGroups(g);
@@ -82,6 +84,33 @@ export function AssetProvider({ children }: { children: ReactNode }) {
     await fetchLookups();
   }
 
+  async function addBrand(data: { name: string }) {
+    await fetch('http://localhost:3000/brands', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    await fetchLookups();
+  }
+
+  async function addGroup(data: { name: string }) {
+    await fetch('http://localhost:3000/groups', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    await fetchLookups();
+  }
+
+  async function addSector(data: { name: string }) {
+    await fetch('http://localhost:3000/sectors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    await fetchLookups();
+  }
+
   useEffect(() => {
     Promise.all([fetchAssets(), fetchLookups()]).finally(() => setLoading(false));
   }, []);
@@ -89,7 +118,8 @@ export function AssetProvider({ children }: { children: ReactNode }) {
   return (
     <AssetContext.Provider value={{
       assets, brands, companies, groups, subgroups, sectors,
-      statusOptions, loading, addAsset, addCompany
+      statusOptions, loading,
+      addAsset, addCompany, addBrand, addGroup, addSector
     }}>
       {children}
     </AssetContext.Provider>
