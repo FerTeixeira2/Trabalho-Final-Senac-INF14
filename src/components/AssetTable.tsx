@@ -103,6 +103,9 @@ export function AssetTable({
               <th className="px-4 py-3 text-left text-sm text-muted-foreground hidden lg:table-cell">
                 Setor
               </th>
+              <th className="px-4 py-3 text-left text-sm text-muted-foreground hidden lg:table-cell">
+                Onde esta localizado
+              </th>
               <th className="px-4 py-3 text-left text-sm text-muted-foreground">
                 Status
               </th>
@@ -158,6 +161,10 @@ export function AssetTable({
 
                 <td className="px-4 py-3 hidden lg:table-cell">
                   {asset.sector}
+                </td>
+
+                <td className="px-4 py-3 hidden lg:table-cell">
+                  {asset.ondeEsta}
                 </td>
 
                 <td className="px-4 py-3">

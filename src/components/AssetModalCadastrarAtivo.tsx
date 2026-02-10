@@ -45,6 +45,7 @@ const INITIAL_FORM: AssetFormData = {
   observations: '',
   imageUrl: '',
   status: 'active',
+  ondeEsta: '',
 };
 
 export function AssetModalCadastrarAtivo({
@@ -80,7 +81,6 @@ export function AssetModalCadastrarAtivo({
     setFormData(prev => ({ ...prev, [field]: value }));
   }
 
-  // 🔹 Upload da imagem
   async function handleImageUpload(file: File) {
     const data = new FormData();
     data.append('image', file);
@@ -129,9 +129,8 @@ export function AssetModalCadastrarAtivo({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* ================= IMAGEM ================= */}
+          {/* IMAGEM */}
           <div className="flex gap-4 items-start">
-            {/* PREVIEW */}
             <div className="w-28 h-28 border rounded flex items-center justify-center overflow-hidden bg-muted">
               {formData.imageUrl ? (
                 <img
@@ -143,14 +142,11 @@ export function AssetModalCadastrarAtivo({
               )}
             </div>
 
-            {/* CONTROLES */}
             <div className="flex flex-col gap-2 flex-1">
               <Input
                 placeholder="URL da imagem"
                 value={formData.imageUrl}
-                onChange={e =>
-                  handleChange('imageUrl', e.target.value)
-                }
+                onChange={e => handleChange('imageUrl', e.target.value)}
                 disabled={isView}
               />
 
@@ -162,9 +158,7 @@ export function AssetModalCadastrarAtivo({
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploading}
                   >
-                    {uploading
-                      ? 'Enviando imagem...'
-                      : 'Escolher imagem do computador'}
+                    {uploading ? 'Enviando imagem...' : 'Escolher imagem'}
                   </Button>
 
                   <input
@@ -182,7 +176,7 @@ export function AssetModalCadastrarAtivo({
             </div>
           </div>
 
-          {/* ================= CAMPOS ================= */}
+          {/* CAMPOS */}
           <Input placeholder="Código" value={formData.code} onChange={e => handleChange('code', e.target.value)} disabled={isView} />
           <Input placeholder="Nome" value={formData.name} onChange={e => handleChange('name', e.target.value)} disabled={isView} />
           <Input placeholder="Modelo" value={formData.model} onChange={e => handleChange('model', e.target.value)} disabled={isView} />
@@ -220,18 +214,23 @@ export function AssetModalCadastrarAtivo({
             </SelectContent>
           </Select>
 
+          {/* ✅ AQUI ESTAVA O BUG */}
+          <Input
+            placeholder="Onde está localizado"
+            value={formData.ondeEsta}
+            onChange={e => handleChange('ondeEsta', e.target.value)}
+            disabled={isView}
+          />
+
           <Textarea placeholder="Descrição" value={formData.description} onChange={e => handleChange('description', e.target.value)} disabled={isView} />
 
-          {/* ================= BOTÕES ================= */}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
             {mode !== 'view' && (
               <Button type="submit" disabled={loading}>
-                {loading && (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                )}
+                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 Salvar
               </Button>
             )}

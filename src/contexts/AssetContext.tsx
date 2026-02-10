@@ -18,14 +18,12 @@ const AssetContext = createContext<AssetContextType | undefined>(undefined);
 export function AssetProvider({ children }: { children: ReactNode }) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [brands, setBrands] = useState<string[]>([]);
   const [companies, setCompanies] = useState<string[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
   const [subgroups, setSubgroups] = useState<string[]>([]);
   const [sectors, setSectors] = useState<string[]>([]);
   const [statusOptions, setStatusOptions] = useState<string[]>([]);
-
   // 🔹 BUSCAR ATIVOS
   async function fetchAssets() {
     const response = await fetch('http://localhost:3000/assets');
@@ -44,7 +42,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
       status: item.status === 'Ativo' ? 'active' : 'inactive',
       serialNumber: item.numeroSerie ?? '',
       responsibleUser: 'ADM',
-
+      ondeEsta: item.ondeEsta ?? '',
       group: item.grupo ?? '',
       subgroup: item.subgrupo ?? '',
       observations: item.observacoes ?? '',

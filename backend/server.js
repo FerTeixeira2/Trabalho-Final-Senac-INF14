@@ -44,7 +44,7 @@ db.connect(err => {
 
 // ================= ROTAS =================
 
-// 🔹 ATIVOS
+// 🔹 LISTAR ATIVOS
 app.get('/assets', (req, res) => {
   const sql = `
     SELECT 
@@ -59,7 +59,8 @@ app.get('/assets', (req, res) => {
       st.nomeStatus AS status,
       g.descricaoGrupo AS grupo,
       sg.descricaoSubgrupo AS subgrupo,
-      u.nomeUsuario
+      u.nomeUsuario AS responsavel,
+      i.ondeEsta
     FROM item i
     LEFT JOIN marca m ON m.idMarca = i.idMarca
     LEFT JOIN setor s ON s.idSetor = i.idSetor
@@ -71,12 +72,16 @@ app.get('/assets', (req, res) => {
   `;
 
   db.query(sql, (err, results) => {
-    if (err) return res.status(500).json(err);
+    if (err) {
+      console.error(err);
+      return res.status(500).json(err);
+    }
     res.json(results);
   });
 });
 
-// 🔹 LOOKUPS (MANTIDOS 100%)
+// ================= LOOKUPS =================
+
 app.get('/brands', (_, res) => {
   db.query('SELECT descricaoMarca FROM marca', (err, r) => {
     if (err) return res.status(500).json(err);
@@ -119,7 +124,8 @@ app.get('/status', (_, res) => {
   });
 });
 
-// 🔹 UPLOAD DE IMAGEM (NOVO — SEM AFETAR O RESTO)
+// ================= UPLOAD DE IMAGEM =================
+
 app.post('/upload', upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Nenhuma imagem enviada' });
@@ -129,7 +135,8 @@ app.post('/upload', upload.single('image'), (req, res) => {
   res.json({ imageUrl });
 });
 
-// 🔹 ADICIONAR ATIVO (AJUSTADO, SEM REMOVER CAMPOS)
+// ================= CADASTRAR ATIVO =================
+
 app.post('/assets', (req, res) => {
   const item = req.body;
 
@@ -148,9 +155,11 @@ app.post('/assets', (req, res) => {
       idSubgrupo,
       imagem,
       data,
-      IdStatus
+      IdStatus,
+      ondeEsta
     )
-    VALUES (?, ?, ?, 
+    VALUES (
+      ?, ?, ?,
       (SELECT idMarca FROM marca WHERE descricaoMarca = ?),
       ?,
       1,
@@ -160,34 +169,41 @@ app.post('/assets', (req, res) => {
       (SELECT idSubgrupo FROM subgrupo WHERE descricaoSubgrupo = ?),
       ?,
       NOW(),
-      (SELECT IdStatus FROM status WHERE nomeStatus = ?)
+      (SELECT IdStatus FROM status WHERE nomeStatus = ?),
+      ?
     )
   `;
 
   const values = [
-    item.code,
-    item.name,          
-    item.description,    
-    item.brand,
-    item.model,
-    item.sector,
-    item.company,
-    item.group,
-    item.subgroup,
-    item.imageUrl || null,
-    item.status === 'active' ? 'Ativo' : 'Baixado',
+    item.code,                // codigo
+    item.name,                // nome
+    item.description,         // descricaoItem
+    item.brand,               // marca
+    item.model,               // modelo
+    item.sector,              // setor
+    item.company,             // empresa
+    item.group,               // grupo
+    item.subgroup,            // subgrupo
+    item.imageUrl || null,    // imagem
+    item.status === 'active' ? 'Ativo' : 'Baixado', // status
+    item.ondeEsta             // ondeEsta
   ];
 
   db.query(sql, values, (err, result) => {
     if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erro ao cadastrar ativo' });
+      console.error('Erro ao cadastrar ativo:', err);
+      return res.status(500).json({ error: err.sqlMessage });
     }
-    res.json({ message: 'Ativo cadastrado', id: result.insertId });
+
+    res.json({
+      message: 'Ativo cadastrado com sucesso',
+      id: result.insertId,
+    });
   });
 });
 
 // ================= SERVIDOR =================
+
 app.listen(3000, () => {
   console.log('API rodando em http://localhost:3000');
 });

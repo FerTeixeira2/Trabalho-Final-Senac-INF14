@@ -11,7 +11,7 @@ export interface Asset {
   status: 'active' | 'inactive';
   serialNumber?: string;
   responsibleUser?: string;
-
+  ondeEsta?: string;
   group?: string;         // 🔹 adicionado
   subgroup?: string;      // 🔹 adicionado
   observations?: string;  // 🔹 adicionado
