@@ -1,13 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Asset, AssetFormData } from '@/types/asset';
 import { useAssets } from '@/contexts/AssetContext';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
 import { Loader2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -20,6 +32,7 @@ interface AssetModalProps {
 
 const INITIAL_FORM: AssetFormData = {
   code: '',
+  name: '',
   description: '',
   brand: '',
   model: '',
@@ -31,34 +44,32 @@ const INITIAL_FORM: AssetFormData = {
   subgroup: '',
   observations: '',
   imageUrl: '',
-  status: 'active', // ✅ status padrão (fix to match type)
-  name: '',
+  status: 'active',
 };
 
-export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: AssetModalProps) {
-  const { addAsset, brands, companies, groups, subgroups, sectors, statusOptions } = useAssets();
+export function AssetModalCadastrarAtivo({
+  isOpen,
+  onClose,
+  asset,
+  mode,
+}: AssetModalProps) {
+  const { addAsset, brands, companies, groups, subgroups, sectors } =
+    useAssets();
+
   const [formData, setFormData] = useState<AssetFormData>(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isView = mode === 'view';
 
   useEffect(() => {
     if (asset && mode !== 'create') {
       setFormData({
-        code: asset.code ?? '',
-        description: asset.description ?? '',
-        brand: asset.brand ?? '',
-        model: asset.model ?? '',
-        serialNumber: asset.serialNumber ?? '',
-        responsibleUser: asset.responsibleUser ?? 'ADM',
-        company: asset.company ?? '',
-        sector: asset.sector ?? '',
-        group: asset.group ?? '',
-        subgroup: asset.subgroup ?? '',
-        observations: asset.observations ?? '',
+        ...INITIAL_FORM,
+        ...asset,
         imageUrl: asset.imageUrl ?? '',
-        status: asset.status === 'active' ? 'active' : 'inactive',
-        name: asset.name ?? '',
       });
     } else {
       setFormData(INITIAL_FORM);
@@ -69,13 +80,28 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
     setFormData(prev => ({ ...prev, [field]: value }));
   }
 
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // 🔹 Upload da imagem
+  async function handleImageUpload(file: File) {
+    const data = new FormData();
+    data.append('image', file);
 
-    const reader = new FileReader();
-    reader.onloadend = () => setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
-    reader.readAsDataURL(file);
+    try {
+      setUploading(true);
+      const res = await fetch('http://localhost:3000/upload', {
+        method: 'POST',
+        body: data,
+      });
+
+      if (!res.ok) throw new Error();
+
+      const json = await res.json();
+      handleChange('imageUrl', json.imageUrl);
+      toast.success('Imagem enviada com sucesso');
+    } catch {
+      toast.error('Erro ao enviar imagem');
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -83,159 +109,133 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
     setLoading(true);
 
     try {
-      if (mode === 'create') {
-        await addAsset(formData);
-        toast.success('Ativo cadastrado com sucesso');
-      } else {
-        toast.info('Edição ainda não implementada');
-      }
+      await addAsset(formData);
+      toast.success('Ativo cadastrado com sucesso');
       onClose();
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error('Erro ao salvar ativo');
     } finally {
       setLoading(false);
     }
   }
 
-  const title =
-    mode === 'create'
-      ? 'Cadastrar Ativo'
-      : mode === 'edit'
-      ? 'Editar Ativo'
-      : 'Visualizar Ativo';
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle>
+            {mode === 'edit' ? 'Editar Ativo' : 'Cadastrar Ativo'}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* IMAGEM */}
-          <div className="flex items-center gap-4">
-            <div className="w-24 h-24 border rounded-lg flex items-center justify-center overflow-hidden">
+          {/* ================= IMAGEM ================= */}
+          <div className="flex gap-4 items-start">
+            {/* PREVIEW */}
+            <div className="w-28 h-28 border rounded flex items-center justify-center overflow-hidden bg-muted">
               {formData.imageUrl ? (
-                <img src={formData.imageUrl} className="w-full h-full object-cover" alt="Imagem do ativo" />
+                <img
+                  src={formData.imageUrl}
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <Upload className="w-8 h-8 text-muted-foreground" />
+                <Upload className="opacity-40" />
               )}
             </div>
 
-            {!isView && (
-              <>
-                <Label htmlFor="image" className="cursor-pointer text-primary">
-                  Selecionar imagem
-                </Label>
-                <Input id="image" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-              </>
-            )}
+            {/* CONTROLES */}
+            <div className="flex flex-col gap-2 flex-1">
+              <Input
+                placeholder="URL da imagem"
+                value={formData.imageUrl}
+                onChange={e =>
+                  handleChange('imageUrl', e.target.value)
+                }
+                disabled={isView}
+              />
+
+              {!isView && (
+                <>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading
+                      ? 'Enviando imagem...'
+                      : 'Escolher imagem do computador'}
+                  </Button>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={e =>
+                      e.target.files &&
+                      handleImageUpload(e.target.files[0])
+                    }
+                  />
+                </>
+              )}
+            </div>
           </div>
 
-          {/* CAMPOS TEXTO */}
-          <Input placeholder="Código" value={formData.code} disabled={isView} onChange={e => handleChange('code', e.target.value)} />
-          <Input placeholder="Descrição" value={formData.description} disabled={isView} onChange={e => handleChange('description', e.target.value)} />
-          <Input placeholder="Modelo" value={formData.model} disabled={isView} onChange={e => handleChange('model', e.target.value)} />
+          {/* ================= CAMPOS ================= */}
+          <Input placeholder="Código" value={formData.code} onChange={e => handleChange('code', e.target.value)} disabled={isView} />
+          <Input placeholder="Nome" value={formData.name} onChange={e => handleChange('name', e.target.value)} disabled={isView} />
+          <Input placeholder="Modelo" value={formData.model} onChange={e => handleChange('model', e.target.value)} disabled={isView} />
 
-          {/* SELECTS */}
-          <Select value={formData.brand} disabled={isView} onValueChange={value => handleChange('brand', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione a marca" />
-            </SelectTrigger>
+          <Select value={formData.brand} onValueChange={v => handleChange('brand', v)} disabled={isView}>
+            <SelectTrigger><SelectValue placeholder="Marca" /></SelectTrigger>
+            <SelectContent>{brands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+          </Select>
+
+          <Select value={formData.company} onValueChange={v => handleChange('company', v)} disabled={isView}>
+            <SelectTrigger><SelectValue placeholder="Empresa" /></SelectTrigger>
+            <SelectContent>{companies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+          </Select>
+
+          <Select value={formData.sector} onValueChange={v => handleChange('sector', v)} disabled={isView}>
+            <SelectTrigger><SelectValue placeholder="Setor" /></SelectTrigger>
+            <SelectContent>{sectors.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+          </Select>
+
+          <Select value={formData.group} onValueChange={v => handleChange('group', v)} disabled={isView}>
+            <SelectTrigger><SelectValue placeholder="Grupo" /></SelectTrigger>
+            <SelectContent>{groups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
+          </Select>
+
+          <Select value={formData.subgroup} onValueChange={v => handleChange('subgroup', v)} disabled={isView}>
+            <SelectTrigger><SelectValue placeholder="Subgrupo" /></SelectTrigger>
+            <SelectContent>{subgroups.map(sg => <SelectItem key={sg} value={sg}>{sg}</SelectItem>)}</SelectContent>
+          </Select>
+
+          <Select value={formData.status} onValueChange={v => handleChange('status', v)} disabled={isView}>
+            <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
-              {brands.map(item => (
-                <SelectItem key={item} value={item}>
-                  {item}
-                </SelectItem>
-              ))}
+              <SelectItem value="active">Ativo</SelectItem>
+              <SelectItem value="inactive">Inativo</SelectItem>
             </SelectContent>
           </Select>
 
-          <Select value={formData.company} disabled={isView} onValueChange={value => handleChange('company', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione a empresa" />
-            </SelectTrigger>
-            <SelectContent>
-              {companies.map(item => (
-                <SelectItem key={item} value={item}>
-                  {item}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Textarea placeholder="Descrição" value={formData.description} onChange={e => handleChange('description', e.target.value)} disabled={isView} />
 
-          <Select value={formData.sector} disabled={isView} onValueChange={value => handleChange('sector', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o setor" />
-            </SelectTrigger>
-            <SelectContent>
-              {sectors.map(item => (
-                <SelectItem key={item} value={item}>
-                  {item}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={formData.group} disabled={isView} onValueChange={value => handleChange('group', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o grupo" />
-            </SelectTrigger>
-            <SelectContent>
-              {groups.map(item => (
-                <SelectItem key={item} value={item}>
-                  {item}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={formData.subgroup} disabled={isView} onValueChange={value => handleChange('subgroup', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o subgrupo" />
-            </SelectTrigger>
-            <SelectContent>
-              {subgroups.map(item => (
-                <SelectItem key={item} value={item}>
-                  {item}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* STATUS DINÂMICO */}
-          <Select value={formData.status} disabled={isView} onValueChange={value => handleChange('status', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o status" />
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map(item => (
-                <SelectItem key={item} value={item}>
-                  {item}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Textarea
-            placeholder="Observações"
-            value={formData.observations}
-            disabled={isView}
-            onChange={e => handleChange('observations', e.target.value)}
-          />
-
-          {!isView && (
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
+          {/* ================= BOTÕES ================= */}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            {mode !== 'view' && (
               <Button type="submit" disabled={loading}>
-                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {loading && (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                )}
                 Salvar
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </form>
       </DialogContent>
     </Dialog>

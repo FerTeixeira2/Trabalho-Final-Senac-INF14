@@ -25,11 +25,18 @@ export function AssetFilters({ filters, onFiltersChange }: AssetFiltersProps) {
     return null;
   }
 
-  // 🔹 Derivando filtros a partir dos assets
-  const brands = Array.from(new Set(assets.map(a => a.brand)));
-  const models = Array.from(new Set(assets.map(a => a.model)));
-  const companies = Array.from(new Set(assets.map(a => a.company)));
-  const sectors = Array.from(new Set(assets.map(a => a.sector)));
+  const brands = Array.from(
+    new Set(assets.map(a => a.brand).filter(b => b && b.trim() !== ''))
+  );
+  const models = Array.from(
+    new Set(assets.map(a => a.model).filter(m => m && m.trim() !== ''))
+  );
+  const companies = Array.from(
+    new Set(assets.map(a => a.company).filter(c => c && c.trim() !== ''))
+  );
+  const sectors = Array.from(
+    new Set(assets.map(a => a.sector).filter(s => s && s.trim() !== ''))
+  );
 
   function handleChange(key: keyof FilterState, value: string) {
     onFiltersChange({

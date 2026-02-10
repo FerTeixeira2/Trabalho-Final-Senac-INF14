@@ -1,12 +1,32 @@
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 app.use(cors({ origin: 'http://localhost:8080' }));
 app.use(express.json());
 
-// Conexão com o MySQL
+// ================= PASTA DE UPLOAD =================
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+app.use('/uploads', express.static(uploadDir));
+
+// ================= MULTER =================
+const storage = multer.diskStorage({
+  destination: (_, __, cb) => cb(null, uploadDir),
+  filename: (_, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, Date.now() + ext);
+  },
+});
+const upload = multer({ storage });
+
+// ================= CONEXÃO MYSQL =================
 const db = mysql.createConnection({
   host: 'localhost',
   user: 'root',
@@ -22,16 +42,16 @@ db.connect(err => {
   console.log('Conectado ao MySQL');
 });
 
-// ----- ROTAS -----
+// ================= ROTAS =================
 
-// ATIVOS
+// 🔹 ATIVOS
 app.get('/assets', (req, res) => {
   const sql = `
     SELECT 
       i.codigo,
       i.nome,
-      i.imagem,
       i.descricaoItem,
+      i.imagem,
       m.descricaoMarca AS marca,
       i.modelo,
       e.descricaoEmpresa AS empresa,
@@ -49,84 +69,96 @@ app.get('/assets', (req, res) => {
     LEFT JOIN subgrupo sg ON sg.idSubgrupo = i.idSubgrupo
     LEFT JOIN usuario u ON u.idUsuario = i.idUsuario
   `;
+
   db.query(sql, (err, results) => {
     if (err) return res.status(500).json(err);
     res.json(results);
   });
 });
 
-// MARCAS
-app.get('/brands', (req, res) => {
-  db.query('SELECT descricaoMarca FROM marca', (err, results) => {
+// 🔹 LOOKUPS (MANTIDOS 100%)
+app.get('/brands', (_, res) => {
+  db.query('SELECT descricaoMarca FROM marca', (err, r) => {
     if (err) return res.status(500).json(err);
-    const brands = results.map(r => r.descricaoMarca);
-    res.json(brands);
+    res.json(r.map(i => i.descricaoMarca));
   });
 });
 
-// EMPRESAS
-app.get('/companies', (req, res) => {
-  db.query('SELECT descricaoEmpresa FROM empresa', (err, results) => {
+app.get('/companies', (_, res) => {
+  db.query('SELECT descricaoEmpresa FROM empresa', (err, r) => {
     if (err) return res.status(500).json(err);
-    const companies = results.map(r => r.descricaoEmpresa);
-    res.json(companies);
+    res.json(r.map(i => i.descricaoEmpresa));
   });
 });
 
-// SETORES
-app.get('/sectors', (req, res) => {
-  db.query('SELECT descricaoSetor FROM setor', (err, results) => {
+app.get('/sectors', (_, res) => {
+  db.query('SELECT descricaoSetor FROM setor', (err, r) => {
     if (err) return res.status(500).json(err);
-    const sectors = results.map(r => r.descricaoSetor);
-    res.json(sectors);
+    res.json(r.map(i => i.descricaoSetor));
   });
 });
 
-// GRUPOS
-app.get('/groups', (req, res) => {
-  db.query('SELECT descricaoGrupo FROM grupo', (err, results) => {
+app.get('/groups', (_, res) => {
+  db.query('SELECT descricaoGrupo FROM grupo', (err, r) => {
     if (err) return res.status(500).json(err);
-    const groups = results.map(r => r.descricaoGrupo);
-    res.json(groups);
+    res.json(r.map(i => i.descricaoGrupo));
   });
 });
 
-// SUBGRUPOS
-app.get('/subgroups', (req, res) => {
-  db.query('SELECT descricaoSubgrupo FROM subgrupo', (err, results) => {
+app.get('/subgroups', (_, res) => {
+  db.query('SELECT descricaoSubgrupo FROM subgrupo', (err, r) => {
     if (err) return res.status(500).json(err);
-    const subgroups = results.map(r => r.descricaoSubgrupo);
-    res.json(subgroups);
+    res.json(r.map(i => i.descricaoSubgrupo));
   });
 });
 
-// STATUS
-app.get('/status', (req, res) => {
-  db.query('SELECT nomeStatus FROM status', (err, results) => {
+app.get('/status', (_, res) => {
+  db.query('SELECT nomeStatus FROM status', (err, r) => {
     if (err) return res.status(500).json(err);
-    const status = results.map(r => r.nomeStatus);
-    res.json(status);
+    res.json(r.map(i => i.nomeStatus));
   });
 });
 
-// ADICIONAR ATIVO
+// 🔹 UPLOAD DE IMAGEM (NOVO — SEM AFETAR O RESTO)
+app.post('/upload', upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'Nenhuma imagem enviada' });
+  }
+
+  const imageUrl = `http://localhost:3000/uploads/${req.file.filename}`;
+  res.json({ imageUrl });
+});
+
+// 🔹 ADICIONAR ATIVO (AJUSTADO, SEM REMOVER CAMPOS)
 app.post('/assets', (req, res) => {
   const item = req.body;
 
-  console.log('Dados recebidos no POST /assets:', item);
-
   const sql = `
     INSERT INTO item
-      (codigo, nome, idMarca, modelo, idUsuario, idSetor, idEmpresa, idGrupo, idSubgrupo, imagem, data, IdStatus)
-    VALUES (?, ?, 
+    (
+      codigo,
+      nome,
+      descricaoItem,
+      idMarca,
+      modelo,
+      idUsuario,
+      idSetor,
+      idEmpresa,
+      idGrupo,
+      idSubgrupo,
+      imagem,
+      data,
+      IdStatus
+    )
+    VALUES (?, ?, ?, 
       (SELECT idMarca FROM marca WHERE descricaoMarca = ?),
-      ?, 
-      ?, -- idUsuario fixo (1)
+      ?,
+      1,
       (SELECT idSetor FROM setor WHERE descricaoSetor = ?),
       (SELECT idEmpresa FROM empresa WHERE descricaoEmpresa = ?),
       (SELECT idGrupo FROM grupo WHERE descricaoGrupo = ?),
       (SELECT idSubgrupo FROM subgrupo WHERE descricaoSubgrupo = ?),
-      ?, -- imagem (URL/base64)
+      ?,
       NOW(),
       (SELECT IdStatus FROM status WHERE nomeStatus = ?)
     )
@@ -134,28 +166,28 @@ app.post('/assets', (req, res) => {
 
   const values = [
     item.code,
-    item.description,
+    item.name,          
+    item.description,    
     item.brand,
     item.model,
-    1, // idUsuario fixo como 1 (ADM)
     item.sector,
     item.company,
     item.group,
     item.subgroup,
     item.imageUrl || null,
-    item.status === 'active' ? 'Ativo' : 'Inativo'
+    item.status === 'active' ? 'Ativo' : 'Baixado',
   ];
 
   db.query(sql, values, (err, result) => {
     if (err) {
-      console.error('Erro ao inserir item:', err);
-      return res.status(500).json({ error: 'Erro ao cadastrar ativo', details: err });
+      console.error(err);
+      return res.status(500).json({ error: 'Erro ao cadastrar ativo' });
     }
     res.json({ message: 'Ativo cadastrado', id: result.insertId });
   });
 });
 
-// INICIAR SERVIDOR
+// ================= SERVIDOR =================
 app.listen(3000, () => {
   console.log('API rodando em http://localhost:3000');
 });
