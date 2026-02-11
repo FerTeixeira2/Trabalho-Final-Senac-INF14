@@ -73,37 +73,81 @@ export function AssetProvider({ children }: { children: ReactNode }) {
   }
 
   async function addAsset(data: AssetFormData) {
-    await fetch('http://localhost:3000/assets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const res = await fetch('http://localhost:3000/assets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Erro ao cadastrar ativo');
+    }
     await fetchAssets();
   }
 
   async function addCompany(data: { name: string; cnpj?: string; description?: string }) {
-    await fetch('http://localhost:3000/companies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const res = await fetch('http://localhost:3000/companies', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Erro ao cadastrar empresa');
+    }
     await fetchLookups();
   }
 
   async function addBrand(data: { name: string }) {
-    await fetch('http://localhost:3000/brands', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const res = await fetch('http://localhost:3000/brands', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Erro ao cadastrar marca');
+    }
     await fetchLookups();
   }
 
   async function addGroup(data: { name: string }) {
-    await fetch('http://localhost:3000/groups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const res = await fetch('http://localhost:3000/groups', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Erro ao cadastrar grupo');
+    }
     await fetchLookups();
   }
 
   async function addSector(data: { name: string }) {
-    await fetch('http://localhost:3000/sectors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const res = await fetch('http://localhost:3000/sectors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Erro ao cadastrar setor');
+    }
     await fetchLookups();
   }
 
   async function addSubgroup(data: { name: string; groupId: number; description?: string }) {
     if (!data.name || !data.groupId) throw new Error('Nome do subgrupo e grupo são obrigatórios');
-    await fetch('http://localhost:3000/subgroups', {
+    const res = await fetch('http://localhost:3000/subgroups', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Erro ao cadastrar subgrupo');
+    }
     const sg = await fetch('http://localhost:3000/subgroups').then(r => r.json());
     setSubgroups(sg);
   }

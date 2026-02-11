@@ -31,7 +31,7 @@ export function SectorModal({ open, onOpenChange }: SectorModalProps) {
       toast.success("Setor cadastrado com sucesso!"); // mensagem de sucesso
     } catch (err) {
       console.error("Erro ao cadastrar setor:", err);
-      toast.error("Não foi possível cadastrar o setor.");
+      toast.error("Setor já existente!");
     }
   };
 

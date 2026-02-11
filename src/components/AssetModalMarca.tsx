@@ -31,7 +31,7 @@ export function BrandModal({ open, onOpenChange }: BrandModalProps) {
       toast.success("Marca cadastrada com sucesso!"); // mensagem de sucesso
     } catch (err) {
       console.error("Erro ao cadastrar marca:", err);
-      toast.error("Não foi possível cadastrar a marca.");
+      toast.error("Marca já existente!");
     }
   };
 

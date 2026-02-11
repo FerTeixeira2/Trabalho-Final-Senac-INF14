@@ -138,36 +138,72 @@ app.post('/companies', (req, res) => {
     return res.status(400).json({ error: 'Nome da empresa é obrigatório' });
   }
 
-  const sql = `
-    INSERT INTO empresa (descricaoEmpresa, cnpjEmpresa, descricao)
-    VALUES (?, ?, ?)
+  // Validação: não permitir mesma empresa (mesmo nome OU mesmo CNPJ)
+  const checkSql = `
+    SELECT idEmpresa 
+    FROM empresa 
+    WHERE descricaoEmpresa = ? 
+       OR (cnpjEmpresa IS NOT NULL AND cnpjEmpresa = ?)
+    LIMIT 1
   `;
 
-  db.query(
-    sql,
-    [name, cnpj || null, description || null],
-    (err, result) => {
-      if (err) {
-        console.error('ERRO MYSQL:', err);
-        return res.status(500).json({ error: err.sqlMessage });
-      }
+  db.query(checkSql, [name, cnpj || ''], (checkErr, checkResult) => {
+    if (checkErr) {
+      console.error('ERRO MYSQL (check empresa):', checkErr);
+      return res.status(500).json({ error: checkErr.sqlMessage });
+    }
 
-      res.status(201).json({
-        message: 'Empresa cadastrada com sucesso',
-        id: result.insertId,
+    if (checkResult.length > 0) {
+      return res.status(400).json({
+        error: 'Já existe uma empresa cadastrada com esse nome ou CNPJ',
       });
     }
-  );
+
+    const sql = `
+      INSERT INTO empresa (descricaoEmpresa, cnpjEmpresa, descricao)
+      VALUES (?, ?, ?)
+    `;
+
+    db.query(
+      sql,
+      [name, cnpj || null, description || null],
+      (err, result) => {
+        if (err) {
+          console.error('ERRO MYSQL:', err);
+          return res.status(500).json({ error: err.sqlMessage });
+        }
+
+        res.status(201).json({
+          message: 'Empresa cadastrada com sucesso',
+          id: result.insertId,
+        });
+      }
+    );
+  });
 });
 
 // ================= CADASTRAR MARCA =================
 app.post('/brands', (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ error: 'Nome da marca é obrigatório' });
-  const sql = `INSERT INTO marca (descricaoMarca) VALUES (?)`;
-  db.query(sql, [name], (err, result) => {
-    if (err) return res.status(500).json({ error: err.sqlMessage });
-    res.status(201).json({ message: 'Marca cadastrada com sucesso', id: result.insertId });
+
+  // Validação: não permitir mesma marca
+  const checkSql = 'SELECT idMarca FROM marca WHERE descricaoMarca = ? LIMIT 1';
+  db.query(checkSql, [name], (checkErr, checkResult) => {
+    if (checkErr) {
+      console.error('ERRO MYSQL (check marca):', checkErr);
+      return res.status(500).json({ error: checkErr.sqlMessage });
+    }
+
+    if (checkResult.length > 0) {
+      return res.status(400).json({ error: 'Já existe uma marca com esse nome' });
+    }
+
+    const sql = `INSERT INTO marca (descricaoMarca) VALUES (?)`;
+    db.query(sql, [name], (err, result) => {
+      if (err) return res.status(500).json({ error: err.sqlMessage });
+      res.status(201).json({ message: 'Marca cadastrada com sucesso', id: result.insertId });
+    });
   });
 });
 
@@ -175,10 +211,24 @@ app.post('/brands', (req, res) => {
 app.post('/groups', (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ error: 'Nome do grupo é obrigatório' });
-  const sql = `INSERT INTO grupo (descricaoGrupo) VALUES (?)`;
-  db.query(sql, [name], (err, result) => {
-    if (err) return res.status(500).json({ error: err.sqlMessage });
-    res.status(201).json({ message: 'Grupo cadastrado com sucesso', id: result.insertId });
+
+  // Validação: não permitir mesmo grupo
+  const checkSql = 'SELECT idGrupo FROM grupo WHERE descricaoGrupo = ? LIMIT 1';
+  db.query(checkSql, [name], (checkErr, checkResult) => {
+    if (checkErr) {
+      console.error('ERRO MYSQL (check grupo):', checkErr);
+      return res.status(500).json({ error: checkErr.sqlMessage });
+    }
+
+    if (checkResult.length > 0) {
+      return res.status(400).json({ error: 'Já existe um grupo com esse nome' });
+    }
+
+    const sql = `INSERT INTO grupo (descricaoGrupo) VALUES (?)`;
+    db.query(sql, [name], (err, result) => {
+      if (err) return res.status(500).json({ error: err.sqlMessage });
+      res.status(201).json({ message: 'Grupo cadastrado com sucesso', id: result.insertId });
+    });
   });
 });
 
@@ -186,10 +236,24 @@ app.post('/groups', (req, res) => {
 app.post('/sectors', (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ error: 'Nome do setor é obrigatório' });
-  const sql = `INSERT INTO setor (descricaoSetor) VALUES (?)`;
-  db.query(sql, [name], (err, result) => {
-    if (err) return res.status(500).json({ error: err.sqlMessage });
-    res.status(201).json({ message: 'Setor cadastrado com sucesso', id: result.insertId });
+
+  // Validação: não permitir mesmo setor
+  const checkSql = 'SELECT idSetor FROM setor WHERE descricaoSetor = ? LIMIT 1';
+  db.query(checkSql, [name], (checkErr, checkResult) => {
+    if (checkErr) {
+      console.error('ERRO MYSQL (check setor):', checkErr);
+      return res.status(500).json({ error: checkErr.sqlMessage });
+    }
+
+    if (checkResult.length > 0) {
+      return res.status(400).json({ error: 'Já existe um setor com esse nome' });
+    }
+
+    const sql = `INSERT INTO setor (descricaoSetor) VALUES (?)`;
+    db.query(sql, [name], (err, result) => {
+      if (err) return res.status(500).json({ error: err.sqlMessage });
+      res.status(201).json({ message: 'Setor cadastrado com sucesso', id: result.insertId });
+    });
   });
 });
 
@@ -197,10 +261,24 @@ app.post('/sectors', (req, res) => {
 app.post('/subgroups', (req, res) => {
   const { name, groupId, description } = req.body;
   if (!name || !groupId) return res.status(400).json({ error: 'Nome do subgrupo e grupo são obrigatórios' });
-  const sql = `INSERT INTO subgrupo (descricaoSubgrupo, idGrupo, descricao) VALUES (?, ?, ?)`;
-  db.query(sql, [name, groupId, description || null], (err, result) => {
-    if (err) return res.status(500).json({ error: err.sqlMessage });
-    res.status(201).json({ message: 'Subgrupo cadastrado com sucesso', id: result.insertId });
+
+  // Validação: não permitir mesmo subgrupo (pelo nome)
+  const checkSql = 'SELECT idSubgrupo FROM subgrupo WHERE descricaoSubgrupo = ? LIMIT 1';
+  db.query(checkSql, [name], (checkErr, checkResult) => {
+    if (checkErr) {
+      console.error('ERRO MYSQL (check subgrupo):', checkErr);
+      return res.status(500).json({ error: checkErr.sqlMessage });
+    }
+
+    if (checkResult.length > 0) {
+      return res.status(400).json({ error: 'Já existe um subgrupo com esse nome' });
+    }
+
+    const sql = `INSERT INTO subgrupo (descricaoSubgrupo, idGrupo, descricao) VALUES (?, ?, ?)`;
+    db.query(sql, [name, groupId, description || null], (err, result) => {
+      if (err) return res.status(500).json({ error: err.sqlMessage });
+      res.status(201).json({ message: 'Subgrupo cadastrado com sucesso', id: result.insertId });
+    });
   });
 });
 
@@ -224,61 +302,80 @@ app.post('/assets', (req, res) => {
   const groupId = item.group ? Number(item.group) : null;
   const subgroupId = item.subgroup ? Number(item.subgroup) : null;
 
-  const sql = `
-    INSERT INTO item (
-      codigo,
-      nome,
-      descricaoItem,
-      idMarca,
-      modelo,
-      idUsuario,
-      idSetor,
-      idEmpresa,
-      idGrupo,
-      idSubgrupo,
-      imagem,
-      data,
-      idStatus,
-      ondeEsta
-    )
-    VALUES (
-      ?, ?, ?,
-      (SELECT idMarca FROM marca WHERE descricaoMarca = ? LIMIT 1),
-      ?, 1,
-      (SELECT idSetor FROM setor WHERE descricaoSetor = ? LIMIT 1),
-      (SELECT idEmpresa FROM empresa WHERE descricaoEmpresa = ? LIMIT 1),
-      ?,               -- idGrupo (vem do front)
-      ?,               -- idSubgrupo (vem do front)
-      ?, NOW(),
-      (SELECT idStatus FROM status WHERE nomeStatus = ? LIMIT 1),
-      ?
-    )
+  // Validação: não permitir ativo com mesmo código OU mesmo nome
+  const checkSql = `
+    SELECT idItem 
+    FROM item 
+    WHERE codigo = ? OR nome = ?
+    LIMIT 1
   `;
 
-  const values = [
-    item.code,
-    item.name,
-    item.description,
-    item.brand,
-    item.model,
-    item.sector,
-    item.company,
-    groupId,         // idGrupo (ou null)
-    subgroupId,      // idSubgrupo (ou null)
-    item.imageUrl || null,
-    item.status === 'active' ? 'Ativo' : 'Baixado',
-    item.ondeEsta || null,
-  ];
-
-  db.query(sql, values, (err, result) => {
-    if (err) {
-      console.error('ERRO MYSQL:', err);
-      return res.status(500).json({ error: err.sqlMessage });
+  db.query(checkSql, [item.code, item.name], (checkErr, checkResult) => {
+    if (checkErr) {
+      console.error('ERRO MYSQL (check ativo):', checkErr);
+      return res.status(500).json({ error: checkErr.sqlMessage });
     }
 
-    res.json({
-      message: 'Ativo cadastrado com sucesso',
-      id: result.insertId,
+    if (checkResult.length > 0) {
+      return res.status(400).json({ error: 'Já existe um ativo com esse código ou nome' });
+    }
+
+    const sql = `
+      INSERT INTO item (
+        codigo,
+        nome,
+        descricaoItem,
+        idMarca,
+        modelo,
+        idUsuario,
+        idSetor,
+        idEmpresa,
+        idGrupo,
+        idSubgrupo,
+        imagem,
+        data,
+        idStatus,
+        ondeEsta
+      )
+      VALUES (
+        ?, ?, ?,
+        (SELECT idMarca FROM marca WHERE descricaoMarca = ? LIMIT 1),
+        ?, 1,
+        (SELECT idSetor FROM setor WHERE descricaoSetor = ? LIMIT 1),
+        (SELECT idEmpresa FROM empresa WHERE descricaoEmpresa = ? LIMIT 1),
+        ?,               -- idGrupo (vem do front)
+        ?,               -- idSubgrupo (vem do front)
+        ?, NOW(),
+        (SELECT idStatus FROM status WHERE nomeStatus = ? LIMIT 1),
+        ?
+      )
+    `;
+  
+    const values = [
+      item.code,
+      item.name,
+      item.description,
+      item.brand,
+      item.model,
+      item.sector,
+      item.company,
+      groupId,         // idGrupo (ou null)
+      subgroupId,      // idSubgrupo (ou null)
+      item.imageUrl || null,
+      item.status === 'active' ? 'Ativo' : 'Baixado',
+      item.ondeEsta || null,
+    ];
+  
+    db.query(sql, values, (err, result) => {
+      if (err) {
+        console.error('ERRO MYSQL:', err);
+        return res.status(500).json({ error: err.sqlMessage });
+      }
+  
+      res.json({
+        message: 'Ativo cadastrado com sucesso',
+        id: result.insertId,
+      });
     });
   });
 });

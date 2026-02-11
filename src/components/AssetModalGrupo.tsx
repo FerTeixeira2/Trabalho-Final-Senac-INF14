@@ -31,7 +31,7 @@ export function GroupModal({ open, onOpenChange }: GroupModalProps) {
       toast.success("Grupo cadastrado com sucesso!"); // mensagem de sucesso
     } catch (err) {
       console.error("Erro ao cadastrar grupo:", err);
-      toast.error("Não foi possível cadastrar o grupo.");
+      toast.error("Grupo já existente!");
     }
   };
 

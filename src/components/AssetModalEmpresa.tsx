@@ -90,7 +90,7 @@ export function CompanyModal({ open, onOpenChange }: CompanyModalProps) {
       onOpenChange(false);
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao cadastrar empresa");
+      toast.error("Erro ao cadastrar empresa. Nome da empresa ou CNPJ já cadastrado!");
     } finally {
       setLoading(false);
     }
