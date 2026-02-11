@@ -160,7 +160,7 @@ export function AssetTable({ filters, onEdit, onView }: AssetTableProps) {
                           <Edit className="w-4 h-4" />
                         </Button>
 
-                        {asset.status === 'active' && (
+                        {asset.status === 'inactive' && (
                           <Button
                             variant="ghost"
                             size="icon"
