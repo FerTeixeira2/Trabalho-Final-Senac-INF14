@@ -18,6 +18,8 @@ interface AssetContextType {
   addGroup: (data: { name: string }) => Promise<void>;
   addSector: (data: { name: string }) => Promise<void>;
   addSubgroup: (data: { name: string; groupId: number; description?: string }) => Promise<void>;
+  updateAsset: (id: string, data: AssetFormData) => Promise<void>; // ADICIONADO
+  deleteAsset: (id: string) => Promise<void>; // ADICIONADO
 }
 
 const AssetContext = createContext<AssetContextType | undefined>(undefined);
@@ -36,7 +38,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
     const r = await fetch('http://localhost:3000/assets');
     const data = await r.json();
     setAssets(data.map((i: any) => ({
-      id: i.codigo,
+      id: String(i.idItem),
       code: i.codigo,
       name: i.nome,
       description: i.descricaoItem,
@@ -47,8 +49,9 @@ export function AssetProvider({ children }: { children: ReactNode }) {
       sector: i.setor,
       status: i.status === 'Ativo' ? 'active' : 'inactive',
       ondeEsta: i.ondeEsta,
-      group: i.grupo,
-      subgroup: i.subgrupo,
+      // usamos os IDs de grupo/subgrupo para manter o relacionamento correto
+      group: i.idGrupo != null ? String(i.idGrupo) : '',
+      subgroup: i.idSubgrupo != null ? String(i.idSubgrupo) : '',
     })));
   }
 
@@ -109,6 +112,23 @@ export function AssetProvider({ children }: { children: ReactNode }) {
     Promise.all([fetchAssets(), fetchLookups()]).finally(() => setLoading(false));
   }, []);
 
+  async function updateAsset(id: string, data: AssetFormData) {
+    await fetch(`http://localhost:3000/assets/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    await fetchAssets();
+  }
+  
+  async function deleteAsset(id: string) {
+    await fetch(`http://localhost:3000/assets/${id}`, {
+      method: 'DELETE',
+    });
+    await fetchAssets();
+  }
+  
+
   return (
     <AssetContext.Provider
       value={{
@@ -129,6 +149,8 @@ export function AssetProvider({ children }: { children: ReactNode }) {
         addGroup,
         addSector,
         addSubgroup,
+        updateAsset, // ADICIONADO
+        deleteAsset, // ADICIONADO
       }}
     >
       {children}

@@ -46,6 +46,7 @@ db.connect(err => {
 app.get('/assets', (req, res) => {
   const sql = `
     SELECT 
+      i.idItem,
       i.codigo,
       i.nome,
       i.descricaoItem,
@@ -56,7 +57,9 @@ app.get('/assets', (req, res) => {
       s.descricaoSetor AS setor,
       st.nomeStatus AS status,
       g.descricaoGrupo AS grupo,
+      g.idGrupo AS idGrupo,
       sg.descricaoSubgrupo AS subgrupo,
+      sg.idSubgrupo AS idSubgrupo,
       u.nomeUsuario AS responsavel,
       i.ondeEsta
     FROM item i
@@ -217,6 +220,10 @@ app.post('/upload', upload.single('image'), (req, res) => {
 app.post('/assets', (req, res) => {
   const item = req.body;
 
+  // Normaliza IDs de grupo/subgrupo: se vierem vazios, envia NULL para o banco
+  const groupId = item.group ? Number(item.group) : null;
+  const subgroupId = item.subgroup ? Number(item.subgroup) : null;
+
   const sql = `
     INSERT INTO item (
       codigo,
@@ -240,8 +247,8 @@ app.post('/assets', (req, res) => {
       ?, 1,
       (SELECT idSetor FROM setor WHERE descricaoSetor = ? LIMIT 1),
       (SELECT idEmpresa FROM empresa WHERE descricaoEmpresa = ? LIMIT 1),
-      (SELECT idGrupo FROM grupo WHERE descricaoGrupo = ? LIMIT 1),
-      (SELECT idSubgrupo FROM subgrupo WHERE descricaoSubgrupo = ? LIMIT 1),
+      ?,               -- idGrupo (vem do front)
+      ?,               -- idSubgrupo (vem do front)
       ?, NOW(),
       (SELECT idStatus FROM status WHERE nomeStatus = ? LIMIT 1),
       ?
@@ -256,8 +263,8 @@ app.post('/assets', (req, res) => {
     item.model,
     item.sector,
     item.company,
-    item.group,
-    item.subgroup,
+    groupId,         // idGrupo (ou null)
+    subgroupId,      // idSubgrupo (ou null)
     item.imageUrl || null,
     item.status === 'active' ? 'Ativo' : 'Baixado',
     item.ondeEsta || null,
@@ -275,6 +282,84 @@ app.post('/assets', (req, res) => {
     });
   });
 });
+
+// ================= EDITAR ATIVO =================
+app.put('/assets/:id', (req, res) => {
+  const id = req.params.id;
+  const item = req.body;
+
+   // Normaliza IDs de grupo/subgrupo: se vierem vazios, envia NULL para o banco
+  const groupId = item.group ? Number(item.group) : null;
+  const subgroupId = item.subgroup ? Number(item.subgroup) : null;
+
+  const sql = `
+    UPDATE item SET
+      codigo = ?,
+      nome = ?,
+      descricaoItem = ?,
+      idMarca = (SELECT idMarca FROM marca WHERE descricaoMarca = ? LIMIT 1),
+      modelo = ?,
+      idSetor = (SELECT idSetor FROM setor WHERE descricaoSetor = ? LIMIT 1),
+      idEmpresa = (SELECT idEmpresa FROM empresa WHERE descricaoEmpresa = ? LIMIT 1),
+      idGrupo = ?,      -- idGrupo vindo do front
+      idSubgrupo = ?,   -- idSubgrupo vindo do front
+      imagem = ?,
+      idStatus = (SELECT idStatus FROM status WHERE nomeStatus = ? LIMIT 1),
+      ondeEsta = ?
+    WHERE idItem = ?
+  `;
+
+  const values = [
+    item.code,
+    item.name,
+    item.description,
+    item.brand,
+    item.model,
+    item.sector,
+    item.company,
+    groupId,        // idGrupo (ou null)
+    subgroupId,     // idSubgrupo (ou null)
+    item.imageUrl || null,
+    item.status === 'active' ? 'Ativo' : 'Baixado',
+    item.ondeEsta || null,
+    id
+  ];
+
+  db.query(sql, values, (err, result) => {
+    if (err) {
+      console.error('ERRO MYSQL:', err);
+      return res.status(500).json({ error: err.sqlMessage });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Ativo não encontrado' });
+    }
+
+    res.json({ message: 'Ativo atualizado com sucesso' });
+  });
+});
+
+// ================= EXCLUIR ATIVO =================
+app.delete('/assets/:id', (req, res) => {
+  const id = req.params.id;
+
+  const sql = `DELETE FROM item WHERE idItem = ?`;
+
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error('ERRO MYSQL:', err);
+      return res.status(500).json({ error: err.sqlMessage });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Ativo não encontrado' });
+    }
+
+    res.json({ message: 'Ativo excluído com sucesso' });
+  });
+});
+
+
 
 // ================= SERVIDOR =================
 app.listen(3000, () => {

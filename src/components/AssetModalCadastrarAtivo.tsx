@@ -49,7 +49,7 @@ const INITIAL_FORM: AssetFormData = {
 };
 
 export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: AssetModalProps) {
-  const { addAsset, brands, companies, groups, subgroups, sectors } = useAssets();
+  const { addAsset, updateAsset, brands, companies, groups, subgroups, sectors } = useAssets();
 
   const [formData, setFormData] = useState<AssetFormData>(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
@@ -58,7 +58,6 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isView = mode === 'view';
 
-  // Sincroniza o formulário quando o modal abre ou o ativo muda
   useEffect(() => {
     if (isOpen) {
       if (asset && mode !== 'create') {
@@ -68,6 +67,8 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
           group: asset.group ? String(asset.group) : '',
           subgroup: asset.subgroup ? String(asset.subgroup) : '',
           imageUrl: asset.imageUrl ?? '',
+          status: asset.status || 'active',
+          ondeEsta: asset.ondeEsta || '',
         });
       } else {
         setFormData(INITIAL_FORM);
@@ -75,16 +76,10 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
     }
   }, [asset, mode, isOpen]);
 
-  // Lógica para lidar com mudanças e resetar subgrupo se o grupo mudar
   function handleChange(field: keyof AssetFormData, value: string) {
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
-      
-      // Se o usuário trocar o GRUPO, limpamos o SUBGRUPO selecionado
-      if (field === 'group') {
-        updated.subgroup = '';
-      }
-      
+      if (field === 'group') updated.subgroup = '';
       return updated;
     });
   }
@@ -95,15 +90,10 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
 
     try {
       setUploading(true);
-      const res = await fetch('http://localhost:3000/upload', {
-        method: 'POST',
-        body: data,
-      });
-
+      const res = await fetch('http://localhost:3000/upload', { method: 'POST', body: data });
       if (!res.ok) throw new Error();
-
       const json = await res.json();
-      handleChange('imageUrl', json.imageUrl);
+      handleChange('imageUrl', json.imageUrl ?? '');
       toast.success('Imagem enviada com sucesso');
     } catch {
       toast.error('Erro ao enviar imagem');
@@ -118,17 +108,19 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
 
     try {
       if (mode === 'edit' && asset?.id) {
-        // Lógica de update se você tiver essa função no context
-        // await updateAsset(asset.id, formData);
+        // Atualizar usando o contexto (que já refaz o fetch da lista)
+        await updateAsset(asset.id, formData);
         toast.success('Ativo atualizado com sucesso');
       } else {
+        // POST para criar ativo
         await addAsset(formData);
         toast.success('Ativo cadastrado com sucesso');
       }
+
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error('Erro ao salvar ativo');
+      toast.error(err.message || 'Erro ao salvar ativo');
     } finally {
       setLoading(false);
     }
@@ -138,7 +130,9 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{mode === 'edit' ? 'Editar Ativo' : mode === 'view' ? 'Visualizar Ativo' : 'Cadastrar Ativo'}</DialogTitle>
+          <DialogTitle>
+            {mode === 'edit' ? 'Editar Ativo' : mode === 'view' ? 'Visualizar Ativo' : 'Cadastrar Ativo'}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -155,7 +149,7 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
             <div className="flex flex-col gap-2 flex-1">
               <Input
                 placeholder="URL da imagem"
-                value={formData.imageUrl}
+                value={formData.imageUrl ?? ''}
                 onChange={e => handleChange('imageUrl', e.target.value)}
                 disabled={isView}
               />
@@ -181,24 +175,48 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
             </div>
           </div>
 
+          {/* CÓDIGO / NOME */}
           <div className="grid grid-cols-2 gap-4">
-            <Input placeholder="Código" value={formData.code} onChange={e => handleChange('code', e.target.value)} disabled={isView} />
-            <Input placeholder="Nome" value={formData.name} onChange={e => handleChange('name', e.target.value)} disabled={isView} />
+            <Input
+              placeholder="Código"
+              value={formData.code ?? ''}
+              onChange={e => handleChange('code', e.target.value)}
+              disabled={isView}
+            />
+            <Input
+              placeholder="Nome"
+              value={formData.name ?? ''}
+              onChange={e => handleChange('name', e.target.value)}
+              disabled={isView}
+            />
           </div>
 
-          <Input placeholder="Modelo" value={formData.model} onChange={e => handleChange('model', e.target.value)} disabled={isView} />
+          {/* MODELO */}
+          <Input
+            placeholder="Modelo"
+            value={formData.model ?? ''}
+            onChange={e => handleChange('model', e.target.value)}
+            disabled={isView}
+          />
 
+          {/* Marca / Empresa */}
           <div className="grid grid-cols-2 gap-4">
-            {/* Marca */}
-            <Select value={formData.brand} onValueChange={v => handleChange('brand', v)} disabled={isView}>
+            <Select
+              value={formData.brand ?? ''}
+              onValueChange={v => handleChange('brand', v)}
+              disabled={isView}
+            >
               <SelectTrigger><SelectValue placeholder="Marca" /></SelectTrigger>
               <SelectContent>
                 {brands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
               </SelectContent>
             </Select>
 
-            {/* Empresa */}
-            <Select value={formData.company} onValueChange={v => handleChange('company', v)} disabled={isView}>
+            <Select
+              value={formData.company ?? ''}
+              onValueChange={v => handleChange('company', v)}
+              disabled={isView}
+            >
               <SelectTrigger><SelectValue placeholder="Empresa" /></SelectTrigger>
               <SelectContent>
                 {companies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
@@ -207,7 +225,11 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
           </div>
 
           {/* Grupo */}
-          <Select value={formData.group} onValueChange={v => handleChange('group', v)} disabled={isView}>
+          <Select
+            value={formData.group ?? ''}
+            onValueChange={v => handleChange('group', v)}
+            disabled={isView}
+          >
             <SelectTrigger><SelectValue placeholder="Grupo" /></SelectTrigger>
             <SelectContent>
               {groups.map(g => (
@@ -218,10 +240,10 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
             </SelectContent>
           </Select>
 
-          {/* Subgrupo (Filtrado Dinamicamente) */}
-          <Select 
-            value={formData.subgroup} 
-            onValueChange={v => handleChange('subgroup', v)} 
+          {/* Subgrupo */}
+          <Select
+            value={formData.subgroup ?? ''}
+            onValueChange={v => handleChange('subgroup', v)}
             disabled={isView || !formData.group}
           >
             <SelectTrigger>
@@ -238,15 +260,24 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
             </SelectContent>
           </Select>
 
+          {/* Setor / Status */}
           <div className="grid grid-cols-2 gap-4">
-            <Select value={formData.sector} onValueChange={v => handleChange('sector', v)} disabled={isView}>
+            <Select
+              value={formData.sector ?? ''}
+              onValueChange={v => handleChange('sector', v)}
+              disabled={isView}
+            >
               <SelectTrigger><SelectValue placeholder="Setor" /></SelectTrigger>
               <SelectContent>
                 {sectors.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
 
-            <Select value={formData.status} onValueChange={v => handleChange('status', v)} disabled={isView}>
+            <Select
+              value={formData.status ?? ''}
+              onValueChange={v => handleChange('status', v)}
+              disabled={isView}
+            >
               <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="active">Ativo</SelectItem>
@@ -255,9 +286,21 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
             </Select>
           </div>
 
-          <Input placeholder="Onde está localizado" value={formData.ondeEsta} onChange={e => handleChange('ondeEsta', e.target.value)} disabled={isView} />
-          <Textarea placeholder="Descrição" value={formData.description} onChange={e => handleChange('description', e.target.value)} disabled={isView} />
+          {/* Onde está e descrição */}
+          <Input
+            placeholder="Onde está localizado"
+            value={formData.ondeEsta ?? ''}
+            onChange={e => handleChange('ondeEsta', e.target.value)}
+            disabled={isView}
+          />
+          <Textarea
+            placeholder="Descrição"
+            value={formData.description ?? ''}
+            onChange={e => handleChange('description', e.target.value)}
+            disabled={isView}
+          />
 
+          {/* Botões */}
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
             {!isView && (
