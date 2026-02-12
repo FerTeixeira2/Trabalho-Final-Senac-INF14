@@ -30,6 +30,32 @@ interface AssetModalProps {
   mode: 'create' | 'edit' | 'view';
 }
 
+/** Campos obrigatórios para cadastro/edição (chave do formulário -> label para mensagem) */
+const REQUIRED_FIELDS: { key: keyof AssetFormData; label: string }[] = [
+  { key: 'code', label: 'Código' },
+  { key: 'name', label: 'Nome' },
+  { key: 'description', label: 'Descrição' },
+  { key: 'brand', label: 'Marca' },
+  { key: 'model', label: 'Modelo' },
+  { key: 'company', label: 'Empresa' },
+  { key: 'sector', label: 'Setor' },
+  { key: 'group', label: 'Grupo' },
+  { key: 'subgroup', label: 'Subgrupo' },
+  { key: 'status', label: 'Status' },
+  { key: 'ondeEsta', label: 'Onde está localizado!' },
+];
+
+function getValidationErrors(data: AssetFormData): string[] {
+  const missing: string[] = [];
+  for (const { key, label } of REQUIRED_FIELDS) {
+    const value = data[key];
+    if (value === undefined || value === null || String(value).trim() === '') {
+      missing.push(label);
+    }
+  }
+  return missing;
+}
+
 const INITIAL_FORM: AssetFormData = {
   code: '',
   name: '',
@@ -104,6 +130,13 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    const errors = getValidationErrors(formData);
+    if (errors.length > 0) {
+      toast.error(`Preencha todos os campos obrigatórios: ${errors.join(', ')}`);
+      return;
+    }
+
     setLoading(true);
 
     try {
