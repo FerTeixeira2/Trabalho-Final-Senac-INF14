@@ -6,7 +6,10 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-app.use(cors({ origin: 'http://localhost:8080' }));
+// 🔹 Ativar CORS para qualquer origem (rede)
+app.use(cors({
+  origin: '*'
+}));
 app.use(express.json());
 
 // ================= PASTA DE UPLOAD =================
@@ -28,9 +31,9 @@ const upload = multer({ storage });
 
 // ================= CONEXÃO MYSQL =================
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
+  host: 'localhost', // Se MySQL estiver na mesma VM
+  user: 'manager',
+  password: '1985#D-base_',
   database: 'trabalho_final_senac',
 });
 
@@ -459,6 +462,7 @@ app.delete('/assets/:id', (req, res) => {
 
 
 // ================= SERVIDOR =================
-app.listen(3000, () => {
-  console.log('API rodando em http://localhost:3000');
+const PORT = 3000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor rodando em http://0.0.0.0:${PORT}`);
 });

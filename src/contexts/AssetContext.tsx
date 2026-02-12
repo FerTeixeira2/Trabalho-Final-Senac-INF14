@@ -1,5 +1,13 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
 import { Asset, AssetFormData } from '@/types/asset';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface AssetContextType {
   assets: Asset[];
@@ -35,7 +43,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   async function fetchAssets() {
-    const r = await fetch('http://localhost:3000/assets');
+    const r = await fetch(`${API_URL}/assets`);
     const data = await r.json();
     setAssets(data.map((i: any) => ({
       id: String(i.idItem),
@@ -57,12 +65,13 @@ export function AssetProvider({ children }: { children: ReactNode }) {
 
   async function fetchLookups() {
     const [b, c, g, sg, s, st] = await Promise.all([
-      fetch('http://localhost:3000/brands').then(r => r.json()),
-      fetch('http://localhost:3000/companies').then(r => r.json()),
-      fetch('http://localhost:3000/groups').then(r => r.json()),
-      fetch('http://localhost:3000/subgroups').then(r => r.json()),
-      fetch('http://localhost:3000/sectors').then(r => r.json()),
-      fetch('http://localhost:3000/status').then(r => r.json()),
+
+      fetch(`${API_URL}/brands`).then(r => r.json()),
+      fetch(`${API_URL}/companies`).then(r => r.json()),
+      fetch(`${API_URL}/groups`).then(r => r.json()),
+      fetch(`${API_URL}/subgroups`).then(r => r.json()),
+      fetch(`${API_URL}/sectors`).then(r => r.json()),
+      fetch(`${API_URL}/status`).then(r => r.json()),
     ]);
     setBrands(b);
     setCompanies(c);
@@ -73,7 +82,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
   }
 
   async function addAsset(data: AssetFormData) {
-    const res = await fetch('http://localhost:3000/assets', {
+    const res = await fetch(`${API_URL}/assets`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -86,7 +95,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
   }
 
   async function addCompany(data: { name: string; cnpj?: string; description?: string }) {
-    const res = await fetch('http://localhost:3000/companies', {
+    const res = await fetch(`${API_URL}/companies`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -99,7 +108,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
   }
 
   async function addBrand(data: { name: string }) {
-    const res = await fetch('http://localhost:3000/brands', {
+    const res = await fetch(`${API_URL}/brands`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -112,7 +121,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
   }
 
   async function addGroup(data: { name: string }) {
-    const res = await fetch('http://localhost:3000/groups', {
+    const res = await fetch(`${API_URL}/groups`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -125,7 +134,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
   }
 
   async function addSector(data: { name: string }) {
-    const res = await fetch('http://localhost:3000/sectors', {
+    const res = await fetch(`${API_URL}/sectors`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -139,7 +148,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
 
   async function addSubgroup(data: { name: string; groupId: number; description?: string }) {
     if (!data.name || !data.groupId) throw new Error('Nome do subgrupo e grupo são obrigatórios');
-    const res = await fetch('http://localhost:3000/subgroups', {
+    const res = await fetch(`${API_URL}/subgroups`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -148,7 +157,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || 'Erro ao cadastrar subgrupo');
     }
-    const sg = await fetch('http://localhost:3000/subgroups').then(r => r.json());
+    const sg = await fetch(`${API_URL}/subgroups`).then(r => r.json());
     setSubgroups(sg);
   }
 
@@ -157,7 +166,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function updateAsset(id: string, data: AssetFormData) {
-    await fetch(`http://localhost:3000/assets/${id}`, {
+    await fetch(`${API_URL}/assets/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -166,7 +175,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
   }
   
   async function deleteAsset(id: string) {
-    await fetch(`http://localhost:3000/assets/${id}`, {
+    await fetch(`${API_URL}/assets/${id}`, {
       method: 'DELETE',
     });
     await fetchAssets();

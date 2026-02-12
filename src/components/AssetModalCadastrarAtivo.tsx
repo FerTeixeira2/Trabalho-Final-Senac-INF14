@@ -23,6 +23,8 @@ import {
 import { Loader2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 interface AssetModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -141,7 +143,7 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
 
     try {
       setUploading(true);
-      const res = await fetch('http://localhost:3000/upload', { method: 'POST', body: data });
+      const res = await fetch(`${API_URL}/upload`, { method: 'POST', body: data });
       if (!res.ok) throw new Error();
       const json = await res.json();
       handleChange('imageUrl', json.imageUrl ?? '');
