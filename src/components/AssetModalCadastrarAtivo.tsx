@@ -56,6 +56,31 @@ function getValidationErrors(data: AssetFormData): string[] {
   return missing;
 }
 
+/** Verifica se já existe outro ativo com o mesmo código ou nome (no cadastro ou na edição). */
+function getDuplicateErrors(
+  data: AssetFormData,
+  assets: Asset[],
+  excludeAssetId: string | null
+): string[] {
+  const errors: string[] = [];
+  const codeNorm = String(data.code ?? '').trim().toLowerCase();
+  const nameNorm = String(data.name ?? '').trim().toLowerCase();
+  const others = excludeAssetId
+    ? assets.filter(a => a.id !== excludeAssetId)
+    : assets;
+
+  const codeExists = others.some(
+    a => String(a.code ?? '').trim().toLowerCase() === codeNorm
+  );
+  const nameExists = others.some(
+    a => String(a.name ?? '').trim().toLowerCase() === nameNorm
+  );
+
+  if (codeExists) errors.push('Código já cadastrado');
+  if (nameExists) errors.push('Nome já cadastrado');
+  return errors;
+}
+
 const INITIAL_FORM: AssetFormData = {
   code: '',
   name: '',
@@ -75,7 +100,7 @@ const INITIAL_FORM: AssetFormData = {
 };
 
 export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: AssetModalProps) {
-  const { addAsset, updateAsset, brands, companies, groups, subgroups, sectors } = useAssets();
+  const { assets, addAsset, updateAsset, brands, companies, groups, subgroups, sectors } = useAssets();
 
   const [formData, setFormData] = useState<AssetFormData>(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
@@ -134,6 +159,16 @@ export function AssetModalCadastrarAtivo({ isOpen, onClose, asset, mode }: Asset
     const errors = getValidationErrors(formData);
     if (errors.length > 0) {
       toast.error(`Preencha todos os campos obrigatórios: ${errors.join(', ')}`);
+      return;
+    }
+
+    const duplicateErrors = getDuplicateErrors(
+      formData,
+      assets,
+      mode === 'edit' && asset?.id ? asset.id : null
+    );
+    if (duplicateErrors.length > 0) {
+      toast.error(duplicateErrors.join('. '));
       return;
     }
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Asset } from '@/types/asset';
+import { Asset, AssetFormData } from '@/types/asset';
 import { useAssets } from '@/contexts/AssetContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -13,22 +13,29 @@ interface DeactivateModalProps {
 }
 
 export function DeactivateModal({ isOpen, onClose, asset }: DeactivateModalProps) {
-  const { deactivateAsset } = useAssets();
+  const { updateAsset } = useAssets();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleDeactivate = async () => {
     if (!asset) return;
 
     setIsLoading(true);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    deactivateAsset(asset.id);
-    toast.success('Ativo baixado com sucesso!');
-    
-    setIsLoading(false);
-    onClose();
+    try {
+      const { id, ...rest } = asset;
+      const formData: AssetFormData = {
+        ...rest,
+        status: 'inactive',
+        group: rest.group != null ? String(rest.group) : '',
+        subgroup: rest.subgroup != null ? String(rest.subgroup) : '',
+      };
+      await updateAsset(asset.id, formData);
+      toast.success('Ativo baixado com sucesso!');
+      onClose();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao dar baixa no ativo');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!asset) return null;
