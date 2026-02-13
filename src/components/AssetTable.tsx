@@ -1,11 +1,20 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Asset, FilterState } from '@/types/asset';
 import { useAssets } from '@/contexts/AssetContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Eye, Monitor } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Edit, Trash2, Eye, Monitor, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100] as const;
 
 interface AssetTableProps {
   filters: FilterState;
@@ -17,6 +26,9 @@ interface AssetTableProps {
 export function AssetTable({ filters, onEdit, onView }: AssetTableProps) {
   const { assets, deleteAsset } = useAssets();
   const { isAdmin } = useAuth();
+
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Função para deletar ativo
   async function handleDeactivate(asset: Asset) {
@@ -67,6 +79,15 @@ export function AssetTable({ filters, onEdit, onView }: AssetTableProps) {
     );
   });
 
+  const totalFiltered = filteredAssets.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+  const page = Math.min(currentPage, totalPages);
+  const start = (page - 1) * pageSize;
+  const paginatedAssets = useMemo(
+    () => filteredAssets.slice(start, start + pageSize),
+    [filteredAssets, start, pageSize]
+  );
+
   if (filteredAssets.length === 0) {
     return (
       <div className="bg-card border border-border rounded-xl p-12 text-center">
@@ -109,7 +130,7 @@ export function AssetTable({ filters, onEdit, onView }: AssetTableProps) {
           </thead>
 
           <tbody>
-            {filteredAssets.map((asset, index) => (
+            {paginatedAssets.map((asset, index) => (
               <tr
                 key={asset.id}
                 className="border-b border-border last:border-0 fade-in"
@@ -180,10 +201,58 @@ export function AssetTable({ filters, onEdit, onView }: AssetTableProps) {
         </table>
       </div>
 
-      <div className="px-4 py-3 border-t border-border bg-muted/20">
-        <p className="text-sm text-muted-foreground">
-          Mostrando {filteredAssets.length} de {assets.length} ativos
-        </p>
+      <div className="px-4 py-3 border-t border-border bg-muted/20 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-4">
+          <p className="text-sm text-muted-foreground">
+            Mostrando {start + 1}-{Math.min(start + pageSize, totalFiltered)} de {totalFiltered} ativos
+          </p>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={page <= 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-sm text-muted-foreground px-2">
+                Página {page} de {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Itens por página:</span>
+          <Select
+            value={String(pageSize)}
+            onValueChange={(v) => {
+              setPageSize(Number(v));
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[5rem] h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PAGE_SIZE_OPTIONS.map((n) => (
+                <SelectItem key={n} value={String(n)}>
+                  {n}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </div>
   );

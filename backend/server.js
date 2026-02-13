@@ -32,8 +32,8 @@ const upload = multer({ storage });
 // ================= CONEXÃO MYSQL =================
 const db = mysql.createConnection({
   host: 'localhost', // Se MySQL estiver na mesma VM
-  user: 'manager',
-  password: '1985#D-base_',
+  user: 'root',
+  password: '',
   database: 'trabalho_final_senac',
 });
 
