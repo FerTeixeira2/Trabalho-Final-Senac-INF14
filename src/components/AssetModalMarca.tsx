@@ -8,8 +8,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAssets } from "@/contexts/AssetContext"; // IMPORTAR CONTEXTO
-import { toast } from "sonner"; // IMPORTAR TOAST
+import { useAssets } from "@/contexts/AssetContext";
+import { toast } from "sonner";
+import { List } from "lucide-react";
+import { BrandListModal } from "./BrandListModal";
 
 interface BrandModalProps {
   open: boolean;
@@ -18,7 +20,8 @@ interface BrandModalProps {
 
 export function BrandModal({ open, onOpenChange }: BrandModalProps) {
   const [brandName, setBrandName] = useState("");
-  const { addBrand } = useAssets(); // PEGANDO FUNÇÃO DO CONTEXTO
+  const [listOpen, setListOpen] = useState(false);
+  const { addBrand } = useAssets();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +39,7 @@ export function BrandModal({ open, onOpenChange }: BrandModalProps) {
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md border-border/50 bg-card p-0 gap-0">
         <DialogHeader className="p-6 pb-4">
@@ -60,22 +64,34 @@ export function BrandModal({ open, onOpenChange }: BrandModalProps) {
             />
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col gap-3 pt-2">
             <Button
               type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1"
+              variant="secondary"
+              onClick={() => setListOpen(true)}
+              className="w-full"
             >
-              Cancelar
+              <List className="w-4 h-4 mr-2" />
+              Gerenciar marcas cadastradas
             </Button>
-            <Button type="submit" className="flex-1">
-              Cadastrar
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" className="flex-1">
+                Cadastrar
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
     </Dialog>
+    <BrandListModal open={listOpen} onOpenChange={setListOpen} />
+    </>
   );
 }

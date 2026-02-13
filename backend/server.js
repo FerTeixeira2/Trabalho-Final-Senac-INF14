@@ -93,6 +93,38 @@ app.get('/brands', (_, res) => {
   });
 });
 
+app.get('/brands/list', (_, res) => {
+  db.query('SELECT idMarca, descricaoMarca FROM marca ORDER BY descricaoMarca', (err, r) => {
+    if (err) return res.status(500).json(err);
+    res.json(r);
+  });
+});
+
+app.put('/brands/:id', (req, res) => {
+  const id = req.params.id;
+  const { name } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ error: 'Nome da marca é obrigatório' });
+  const checkSql = 'SELECT idMarca FROM marca WHERE descricaoMarca = ? AND idMarca != ? LIMIT 1';
+  db.query(checkSql, [name.trim(), id], (checkErr, checkResult) => {
+    if (checkErr) return res.status(500).json({ error: checkErr.sqlMessage });
+    if (checkResult.length > 0) return res.status(400).json({ error: 'Já existe uma marca com esse nome' });
+    db.query('UPDATE marca SET descricaoMarca = ? WHERE idMarca = ?', [name.trim(), id], (err, result) => {
+      if (err) return res.status(500).json({ error: err.sqlMessage });
+      if (result.affectedRows === 0) return res.status(404).json({ error: 'Marca não encontrada' });
+      res.json({ message: 'Marca atualizada com sucesso' });
+    });
+  });
+});
+
+app.delete('/brands/:id', (req, res) => {
+  const id = req.params.id;
+  db.query('DELETE FROM marca WHERE idMarca = ?', [id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.sqlMessage });
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Marca não encontrada' });
+    res.json({ message: 'Marca excluída com sucesso' });
+  });
+});
+
 app.get('/companies', (_, res) => {
   db.query('SELECT descricaoEmpresa FROM empresa', (err, r) => {
     if (err) return res.status(500).json(err);
@@ -100,29 +132,138 @@ app.get('/companies', (_, res) => {
   });
 });
 
-app.get('/groups', (_, res) => {
-  // Retorna id + descrição para uso em selects e relacionamentos
-  db.query('SELECT idGrupo, descricaoGrupo FROM grupo', (err, r) => {
+app.get('/companies/list', (_, res) => {
+  db.query('SELECT idEmpresa, descricaoEmpresa, cnpjEmpresa, descricao FROM empresa ORDER BY descricaoEmpresa', (err, r) => {
     if (err) return res.status(500).json(err);
     res.json(r);
   });
 });
 
+app.put('/companies/:id', (req, res) => {
+  const id = req.params.id;
+  const { name, cnpj, description } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ error: 'Nome da empresa é obrigatório' });
+  const checkSql = 'SELECT idEmpresa FROM empresa WHERE (descricaoEmpresa = ? OR (cnpjEmpresa IS NOT NULL AND cnpjEmpresa = ?)) AND idEmpresa != ? LIMIT 1';
+  db.query(checkSql, [name.trim(), (cnpj || '').replace(/\D/g, ''), id], (checkErr, checkResult) => {
+    if (checkErr) return res.status(500).json({ error: checkErr.sqlMessage });
+    if (checkResult.length > 0) return res.status(400).json({ error: 'Já existe uma empresa com esse nome ou CNPJ' });
+    db.query('UPDATE empresa SET descricaoEmpresa = ?, cnpjEmpresa = ?, descricao = ? WHERE idEmpresa = ?', [name.trim(), cnpj || null, description || null, id], (err, result) => {
+      if (err) return res.status(500).json({ error: err.sqlMessage });
+      if (result.affectedRows === 0) return res.status(404).json({ error: 'Empresa não encontrada' });
+      res.json({ message: 'Empresa atualizada com sucesso' });
+    });
+  });
+});
+
+app.delete('/companies/:id', (req, res) => {
+  const id = req.params.id;
+  db.query('DELETE FROM empresa WHERE idEmpresa = ?', [id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.sqlMessage });
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Empresa não encontrada' });
+    res.json({ message: 'Empresa excluída com sucesso' });
+  });
+});
+
+app.get('/groups', (_, res) => {
+  db.query('SELECT idGrupo, descricaoGrupo FROM grupo ORDER BY descricaoGrupo', (err, r) => {
+    if (err) return res.status(500).json(err);
+    res.json(r);
+  });
+});
+
+app.put('/groups/:id', (req, res) => {
+  const id = req.params.id;
+  const { name } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ error: 'Nome do grupo é obrigatório' });
+  const checkSql = 'SELECT idGrupo FROM grupo WHERE descricaoGrupo = ? AND idGrupo != ? LIMIT 1';
+  db.query(checkSql, [name.trim(), id], (checkErr, checkResult) => {
+    if (checkErr) return res.status(500).json({ error: checkErr.sqlMessage });
+    if (checkResult.length > 0) return res.status(400).json({ error: 'Já existe um grupo com esse nome' });
+    db.query('UPDATE grupo SET descricaoGrupo = ? WHERE idGrupo = ?', [name.trim(), id], (err, result) => {
+      if (err) return res.status(500).json({ error: err.sqlMessage });
+      if (result.affectedRows === 0) return res.status(404).json({ error: 'Grupo não encontrado' });
+      res.json({ message: 'Grupo atualizado com sucesso' });
+    });
+  });
+});
+
+app.delete('/groups/:id', (req, res) => {
+  const id = req.params.id;
+  db.query('DELETE FROM grupo WHERE idGrupo = ?', [id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.sqlMessage });
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Grupo não encontrado' });
+    res.json({ message: 'Grupo excluído com sucesso' });
+  });
+});
+
 app.get('/subgroups', (_, res) => {
-  // Retorna id + descrição do subgrupo (e opcionalmente idGrupo)
-  db.query(
-    'SELECT idSubgrupo, descricaoSubgrupo, idGrupo FROM subgrupo',
-    (err, r) => {
-      if (err) return res.status(500).json(err);
-      res.json(r);
-    }
-  );
+  db.query('SELECT idSubgrupo, descricaoSubgrupo, idGrupo FROM subgrupo ORDER BY descricaoSubgrupo', (err, r) => {
+    if (err) return res.status(500).json(err);
+    res.json(r);
+  });
+});
+
+app.put('/subgroups/:id', (req, res) => {
+  const id = req.params.id;
+  const { name, groupId, description } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ error: 'Nome do subgrupo é obrigatório' });
+  const checkSql = 'SELECT idSubgrupo FROM subgrupo WHERE descricaoSubgrupo = ? AND idSubgrupo != ? LIMIT 1';
+  db.query(checkSql, [name.trim(), id], (checkErr, checkResult) => {
+    if (checkErr) return res.status(500).json({ error: checkErr.sqlMessage });
+    if (checkResult.length > 0) return res.status(400).json({ error: 'Já existe um subgrupo com esse nome' });
+    db.query('UPDATE subgrupo SET descricaoSubgrupo = ?, idGrupo = ?, descricao = ? WHERE idSubgrupo = ?', [name.trim(), groupId || null, description || null, id], (err, result) => {
+      if (err) return res.status(500).json({ error: err.sqlMessage });
+      if (result.affectedRows === 0) return res.status(404).json({ error: 'Subgrupo não encontrado' });
+      res.json({ message: 'Subgrupo atualizado com sucesso' });
+    });
+  });
+});
+
+app.delete('/subgroups/:id', (req, res) => {
+  const id = req.params.id;
+  db.query('DELETE FROM subgrupo WHERE idSubgrupo = ?', [id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.sqlMessage });
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Subgrupo não encontrado' });
+    res.json({ message: 'Subgrupo excluído com sucesso' });
+  });
 });
 
 app.get('/sectors', (_, res) => {
   db.query('SELECT descricaoSetor FROM setor', (err, r) => {
     if (err) return res.status(500).json(err);
     res.json(r.map(i => i.descricaoSetor));
+  });
+});
+
+app.get('/sectors/list', (_, res) => {
+  db.query('SELECT idSetor, descricaoSetor FROM setor ORDER BY descricaoSetor', (err, r) => {
+    if (err) return res.status(500).json(err);
+    res.json(r);
+  });
+});
+
+app.put('/sectors/:id', (req, res) => {
+  const id = req.params.id;
+  const { name } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ error: 'Nome do setor é obrigatório' });
+  const checkSql = 'SELECT idSetor FROM setor WHERE descricaoSetor = ? AND idSetor != ? LIMIT 1';
+  db.query(checkSql, [name.trim(), id], (checkErr, checkResult) => {
+    if (checkErr) return res.status(500).json({ error: checkErr.sqlMessage });
+    if (checkResult.length > 0) return res.status(400).json({ error: 'Já existe um setor com esse nome' });
+    db.query('UPDATE setor SET descricaoSetor = ? WHERE idSetor = ?', [name.trim(), id], (err, result) => {
+      if (err) return res.status(500).json({ error: err.sqlMessage });
+      if (result.affectedRows === 0) return res.status(404).json({ error: 'Setor não encontrado' });
+      res.json({ message: 'Setor atualizado com sucesso' });
+    });
+  });
+});
+
+app.delete('/sectors/:id', (req, res) => {
+  const id = req.params.id;
+  db.query('DELETE FROM setor WHERE idSetor = ?', [id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.sqlMessage });
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Setor não encontrado' });
+    res.json({ message: 'Setor excluído com sucesso' });
   });
 });
 

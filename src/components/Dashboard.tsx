@@ -79,48 +79,85 @@ export function Dashboard() {
 
             <Button
               variant="secondary"
-              className="w-full justify-start gap-2"
+              className="w-full justify-start gap-3 h-auto py-3"
               onClick={() => setIsBrandModalOpen(true)}
             >
-              <Layers className="w-4 h-4" />
-              Cadastrar Marca
+              <Layers className="w-5 h-5 shrink-0" />
+
+              <div className="flex flex-col items-start leading-tight">
+                <span className="text-sm font-medium">
+                  Marca
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Cadastrar / Gerenciar
+                </span>
+              </div>
             </Button>
 
             <Button
               variant="secondary"
-              className="w-full justify-start gap-2"
+              className="w-full justify-start gap-3 h-auto py-3"
               onClick={() => setIsCompanyModalOpen(true)}
             >
-              <Building2 className="w-4 h-4" />
-              Cadastrar Empresa
+              <Building2 className="w-5 h-5 shrink-0" />
+              <div className="flex flex-col items-start leading-tight">
+                <span className="text-sm font-medium">
+                  Empresa
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Cadastrar / Gerenciar
+                </span>
+              </div>
             </Button>
 
             <Button
               variant="secondary"
-              className="w-full justify-start gap-2"
+              className="w-full justify-start gap-3 h-auto py-3"
               onClick={() => setIsGroupModalOpen(true)}
             >
-              <FolderTree className="w-4 h-4" />
-              Cadastrar Grupo
+              <FolderTree className="w-5 h-5 shrink-0" />
+              <div className="flex flex-col items-start leading-tight">
+                <span className="text-sm font-medium">
+                  Grupo
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Cadastrar / Gerenciar
+                </span>
+              </div>
             </Button>
 
             <Button
               variant="secondary"
-              className="w-full justify-start gap-2"
+              className="w-full justify-start gap-3 h-auto py-3"
               onClick={() => setIsSubgroupModalOpen(true)}
             >
-              <FolderTree className="w-4 h-4" />
-              Cadastrar Subgrupo
+              <FolderTree className="w-5 h-5 shrink-0" />
+              <div className="flex flex-col items-start leading-tight">
+                <span className="text-sm font-medium">
+                  Subgrupo
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Cadastrar / Gerenciar
+                </span>
+              </div>
             </Button>
 
             <Button
               variant="secondary"
-              className="w-full justify-start gap-2"
+              className="w-full justify-start gap-3 h-auto py-3"
               onClick={() => setIsSectorModalOpen(true)}
             >
-              <Network className="w-4 h-4" />
-              Cadastrar Setor
+              <Network className="w-5 h-5 shrink-0" />
+              <div className="flex flex-col items-start leading-tight">
+                <span className="text-sm font-medium">
+                  Setor
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Cadastrar / Gerenciar
+                </span>
+              </div>
             </Button>
+
           </aside>
         )}
 

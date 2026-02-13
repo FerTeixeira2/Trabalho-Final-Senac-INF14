@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAssets } from "@/contexts/AssetContext";
 import { toast } from "sonner";
+import { List } from "lucide-react";
+import { CompanyListModal } from "./CompanyListModal";
 
 interface CompanyModalProps {
   open: boolean;
@@ -58,7 +60,7 @@ const maskCNPJ = (value: string) => {
 
 export function CompanyModal({ open, onOpenChange }: CompanyModalProps) {
   const { addCompany } = useAssets();
-
+  const [listOpen, setListOpen] = useState(false);
   const [companyName, setCompanyName] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [description, setDescription] = useState("");
@@ -97,10 +99,11 @@ export function CompanyModal({ open, onOpenChange }: CompanyModalProps) {
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Cadastrar Empresa</DialogTitle>
+          <DialogTitle>Cadastrar/Gerenciar Empresa</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -131,21 +134,34 @@ export function CompanyModal({ open, onOpenChange }: CompanyModalProps) {
             />
           </div>
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex flex-col gap-3">
             <Button
               type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
+              variant="secondary"
+              onClick={() => setListOpen(true)}
+              className="w-full"
             >
-              Cancelar
+              <List className="w-4 h-4 mr-2" />
+              Gerenciar empresas cadastradas
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Cadastrando..." : "Cadastrar"}
-            </Button>
+            <div className="flex gap-2 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={loading}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Cadastrando..." : "Cadastrar"}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
     </Dialog>
+    <CompanyListModal open={listOpen} onOpenChange={setListOpen} />
+    </>
   );
 }

@@ -7,7 +7,11 @@ import React, {
 } from 'react';
 import { Asset, AssetFormData } from '@/types/asset';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+export interface BrandItem { idMarca: number; descricaoMarca: string; }
+export interface CompanyItem { idEmpresa: number; descricaoEmpresa: string; cnpjEmpresa?: string; descricao?: string; }
+export interface SectorItem { idSetor: number; descricaoSetor: string; }
 
 interface AssetContextType {
   assets: Asset[];
@@ -26,8 +30,22 @@ interface AssetContextType {
   addGroup: (data: { name: string }) => Promise<void>;
   addSector: (data: { name: string }) => Promise<void>;
   addSubgroup: (data: { name: string; groupId: number; description?: string }) => Promise<void>;
-  updateAsset: (id: string, data: AssetFormData) => Promise<void>; // ADICIONADO
-  deleteAsset: (id: string) => Promise<void>; // ADICIONADO
+  updateAsset: (id: string, data: AssetFormData) => Promise<void>;
+  deleteAsset: (id: string) => Promise<void>;
+  // Listagem com ID + atualizar/excluir para cada entidade
+  fetchBrandsList: () => Promise<BrandItem[]>;
+  updateBrand: (id: number, data: { name: string }) => Promise<void>;
+  deleteBrand: (id: number) => Promise<void>;
+  fetchCompaniesList: () => Promise<CompanyItem[]>;
+  updateCompany: (id: number, data: { name: string; cnpj?: string; description?: string }) => Promise<void>;
+  deleteCompany: (id: number) => Promise<void>;
+  updateGroup: (id: number, data: { name: string }) => Promise<void>;
+  deleteGroup: (id: number) => Promise<void>;
+  fetchSectorsList: () => Promise<SectorItem[]>;
+  updateSector: (id: number, data: { name: string }) => Promise<void>;
+  deleteSector: (id: number) => Promise<void>;
+  updateSubgroup: (id: number, data: { name: string; groupId: number; description?: string }) => Promise<void>;
+  deleteSubgroup: (id: number) => Promise<void>;
 }
 
 const AssetContext = createContext<AssetContextType | undefined>(undefined);
@@ -161,6 +179,78 @@ export function AssetProvider({ children }: { children: ReactNode }) {
     setSubgroups(sg);
   }
 
+  async function fetchBrandsList(): Promise<BrandItem[]> {
+    const r = await fetch(`${API_URL}/brands/list`);
+    if (!r.ok) throw new Error('Erro ao carregar marcas');
+    return r.json();
+  }
+  async function updateBrand(id: number, data: { name: string }) {
+    const res = await fetch(`${API_URL}/brands/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Erro ao atualizar marca'); }
+    await fetchLookups();
+  }
+  async function deleteBrand(id: number) {
+    const res = await fetch(`${API_URL}/brands/${id}`, { method: 'DELETE' });
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Erro ao excluir marca'); }
+    await fetchLookups();
+  }
+
+  async function fetchCompaniesList(): Promise<CompanyItem[]> {
+    const r = await fetch(`${API_URL}/companies/list`);
+    if (!r.ok) throw new Error('Erro ao carregar empresas');
+    return r.json();
+  }
+  async function updateCompany(id: number, data: { name: string; cnpj?: string; description?: string }) {
+    const res = await fetch(`${API_URL}/companies/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Erro ao atualizar empresa'); }
+    await fetchLookups();
+  }
+  async function deleteCompany(id: number) {
+    const res = await fetch(`${API_URL}/companies/${id}`, { method: 'DELETE' });
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Erro ao excluir empresa'); }
+    await fetchLookups();
+  }
+
+  async function updateGroup(id: number, data: { name: string }) {
+    const res = await fetch(`${API_URL}/groups/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Erro ao atualizar grupo'); }
+    await fetchLookups();
+  }
+  async function deleteGroup(id: number) {
+    const res = await fetch(`${API_URL}/groups/${id}`, { method: 'DELETE' });
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Erro ao excluir grupo'); }
+    await fetchLookups();
+  }
+
+  async function fetchSectorsList(): Promise<SectorItem[]> {
+    const r = await fetch(`${API_URL}/sectors/list`);
+    if (!r.ok) throw new Error('Erro ao carregar setores');
+    return r.json();
+  }
+  async function updateSector(id: number, data: { name: string }) {
+    const res = await fetch(`${API_URL}/sectors/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Erro ao atualizar setor'); }
+    await fetchLookups();
+  }
+  async function deleteSector(id: number) {
+    const res = await fetch(`${API_URL}/sectors/${id}`, { method: 'DELETE' });
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Erro ao excluir setor'); }
+    await fetchLookups();
+  }
+
+  async function updateSubgroup(id: number, data: { name: string; groupId: number; description?: string }) {
+    const res = await fetch(`${API_URL}/subgroups/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Erro ao atualizar subgrupo'); }
+    const sg = await fetch(`${API_URL}/subgroups`).then(r => r.json());
+    setSubgroups(sg);
+  }
+  async function deleteSubgroup(id: number) {
+    const res = await fetch(`${API_URL}/subgroups/${id}`, { method: 'DELETE' });
+    if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Erro ao excluir subgrupo'); }
+    const sg = await fetch(`${API_URL}/subgroups`).then(r => r.json());
+    setSubgroups(sg);
+  }
+
   useEffect(() => {
     Promise.all([fetchAssets(), fetchLookups()]).finally(() => setLoading(false));
   }, []);
@@ -202,8 +292,21 @@ export function AssetProvider({ children }: { children: ReactNode }) {
         addGroup,
         addSector,
         addSubgroup,
-        updateAsset, // ADICIONADO
-        deleteAsset, // ADICIONADO
+        updateAsset,
+        deleteAsset,
+        fetchBrandsList,
+        updateBrand,
+        deleteBrand,
+        fetchCompaniesList,
+        updateCompany,
+        deleteCompany,
+        updateGroup,
+        deleteGroup,
+        fetchSectorsList,
+        updateSector,
+        deleteSector,
+        updateSubgroup,
+        deleteSubgroup,
       }}
     >
       {children}

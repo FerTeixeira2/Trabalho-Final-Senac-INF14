@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { List } from 'lucide-react';
+import { SubgroupListModal } from './SubgroupListModal';
 
 interface AssetModalSubGrupoProps {
   isOpen: boolean;
@@ -14,6 +16,7 @@ interface AssetModalSubGrupoProps {
 
 export function AssetModalSubGrupo({ isOpen, onClose }: AssetModalSubGrupoProps) {
   const { addSubgroup, groups } = useAssets();
+  const [listOpen, setListOpen] = useState(false);
   const [name, setName] = useState('');
   const [groupId, setGroupId] = useState<number | null>(null);
   const [description, setDescription] = useState('');
@@ -37,6 +40,7 @@ export function AssetModalSubGrupo({ isOpen, onClose }: AssetModalSubGrupoProps)
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={val => !val && onClose()}>
       <DialogContent>
         <DialogHeader>
@@ -73,9 +77,15 @@ export function AssetModalSubGrupo({ isOpen, onClose }: AssetModalSubGrupoProps)
             <Label>Descrição</Label>
             <Input value={description} onChange={e => setDescription(e.target.value)} />
           </div>
+          <Button type="button" variant="secondary" onClick={() => setListOpen(true)} className="w-full">
+            <List className="w-4 h-4 mr-2" />
+            Gerenciar subgrupos cadastrados
+          </Button>
           <Button onClick={handleSubmit}>Cadastrar</Button>
         </div>
       </DialogContent>
     </Dialog>
+    <SubgroupListModal open={listOpen} onOpenChange={setListOpen} />
+    </>
   );
 }

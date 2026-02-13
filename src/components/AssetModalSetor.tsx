@@ -8,8 +8,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAssets } from "@/contexts/AssetContext"; // importar contexto
-import { toast } from "sonner"; // importar toast
+import { useAssets } from "@/contexts/AssetContext";
+import { toast } from "sonner";
+import { List } from "lucide-react";
+import { SectorListModal } from "./SectorListModal";
 
 interface SectorModalProps {
   open: boolean;
@@ -18,7 +20,8 @@ interface SectorModalProps {
 
 export function SectorModal({ open, onOpenChange }: SectorModalProps) {
   const [sectorName, setSectorName] = useState("");
-  const { addSector } = useAssets(); // pegar função do contexto
+  const [listOpen, setListOpen] = useState(false);
+  const { addSector } = useAssets();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +39,7 @@ export function SectorModal({ open, onOpenChange }: SectorModalProps) {
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md border-border/50 bg-card p-0 gap-0">
         <DialogHeader className="p-6 pb-4">
@@ -45,7 +49,6 @@ export function SectorModal({ open, onOpenChange }: SectorModalProps) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-5">
-          {/* Sector Name Field */}
           <div className="space-y-2">
             <Label htmlFor="sectorName" className="text-sm font-medium text-foreground">
               Nome do Setor <span className="text-primary">*</span>
@@ -60,22 +63,34 @@ export function SectorModal({ open, onOpenChange }: SectorModalProps) {
             />
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col gap-3 pt-2">
             <Button
               type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1"
+              variant="secondary"
+              onClick={() => setListOpen(true)}
+              className="w-full"
             >
-              Cancelar
+              <List className="w-4 h-4 mr-2" />
+              Gerenciar setores cadastrados
             </Button>
-            <Button type="submit" className="flex-1">
-              Cadastrar
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" className="flex-1">
+                Cadastrar
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
     </Dialog>
+    <SectorListModal open={listOpen} onOpenChange={setListOpen} />
+    </>
   );
 }
